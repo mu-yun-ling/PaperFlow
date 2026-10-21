@@ -8,6 +8,8 @@ from flask import request
 from ..errors import APIError
 
 STATUSES = ("not_started", "reading", "completed")
+# SQLite INTEGER 主键使用有符号 64 位整数。
+MAX_RESOURCE_ID = 2**63 - 1
 
 
 def normalized_key(value):

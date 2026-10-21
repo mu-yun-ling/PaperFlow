@@ -5,13 +5,16 @@ from ..errors import APIError
 from ..extensions import db
 from ..models import Paper, Tag, utc_now
 from ..serializers import paper_dict
-from .validation import STATUSES, doi_value, normalized_key, query_integer, text_field, url_value, year_value
+from .validation import MAX_RESOURCE_ID, STATUSES, doi_value, normalized_key, query_integer, text_field, url_value, year_value
 
 PAPER_FIELDS = {"title", "authors", "year", "venue", "doi", "url", "abstract", "research_topic",
                 "reading_status", "is_favorite", "tag_ids"}
 
 
 def get_resource(model, resource_id, name):
+    # 超范围 ID 不可能对应已有记录，避免传给 SQLite 后变成 500 错误。
+    if not 1 <= resource_id <= MAX_RESOURCE_ID:
+        raise APIError(f"{name}不存在", 404, "NOT_FOUND")
     item = db.session.get(model, resource_id)
     if item is None:
         raise APIError(f"{name}不存在", 404, "NOT_FOUND")
@@ -19,8 +22,8 @@ def get_resource(model, resource_id, name):
 
 
 def resolve_tags(ids):
-    if not isinstance(ids, list) or any(type(item) is not int or item <= 0 for item in ids):
-        raise APIError("tag_ids 必须是正整数数组")
+    if not isinstance(ids, list) or any(type(item) is not int or not 1 <= item <= MAX_RESOURCE_ID for item in ids):
+        raise APIError(f"tag_ids 必须是 1 至 {MAX_RESOURCE_ID} 范围内的整数数组")
     if len(ids) > 100:
         raise APIError("单篇文献最多关联 100 个标签")
     unique = set(ids)

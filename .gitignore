@@ -34,3 +34,7 @@ Desktop.ini
 # Build
 build/
 coverage/
+prompt/
+
+prompt/
+.pytest_cache/

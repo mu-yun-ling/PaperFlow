@@ -5,7 +5,7 @@ PaperFlow是个人文献阅读与笔记管理系统，面向大学生与科研�
 
 ## 当前进度
 
-**第一阶段：项目骨架 + 数据库 + 后端基础 API 已实现。**
+**第二阶段：核心业务 CRUD 已完成验收。** 本阶段以 `第二阶段.txt` 为准，沿用第一阶段已有接口，补充关联与真实 HTTP 测试，并修复超范围 ID 导致的服务异常；未扩展 Dashboard、AI 或前端界面。
 
 - 文献 CRUD、标题与 DOI 去重、阅读状态、收藏。
 - 标签创建、列表、删除及文献多标签关联。
@@ -18,7 +18,7 @@ PaperFlow是个人文献阅读与笔记管理系统，面向大学生与科研�
 
 当前网页**还没有文献录入、详情、标签、笔记操作界面及 ECharts 图表**，可先通过 API 操作。ECharts 已安装，后续图表阶段再启用。第一阶段保留空数据库，不自动插入演示数据。
 
-[数据库表、REST API 与开发顺序](docs/design.md) · [第一阶段验收记录](docs/phase-1-verification.md)
+[数据库表、REST API 与开发顺序](docs/design.md) · [第一阶段验收记录](docs/phase-1-verification.md) · [第二阶段验收记录](docs/phase-2-verification.md)
 
 ## Windows 本地运行
 
@@ -78,7 +78,15 @@ npm.cmd run build
 Pop-Location
 ```
 
-后端测试使用独立临时 SQLite 文件，不操作个人文献库。前端 `build` 包含 TypeScript 类型检查。
+后端测试使用独立临时 SQLite 文件，不操作个人文献库。第二阶段验收共 95 项测试通过，其中 `tests/test_http_crud.py` 自动在本机空闲端口启动测试服务，使用真实 HTTP 请求检查 CRUD，结束后关闭测试服务。前端 `build` 包含 TypeScript 类型检查；第二阶段未修改前端。
+
+仅运行第二阶段新增验收测试：
+
+```powershell
+Push-Location backend
+..\.venv\Scripts\python.exe -m pytest tests/test_stage2_crud.py tests/test_http_crud.py -q
+Pop-Location
+```
 
 ## API 操作示例
 
@@ -131,4 +139,4 @@ scripts/                Windows 安装与启动脚本
 docs/                   设计与阶段验收记录
 ```
 
-下一阶段按设计文档实现文献列表、录入编辑和详情页，再完成标签笔记界面与 ECharts Dashboard。
+第二阶段到此停止，第三阶段的开发范围以后续要求为准。文献、标签、笔记操作界面以及 ECharts 图表仍待后续开发。
