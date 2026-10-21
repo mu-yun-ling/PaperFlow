@@ -1,6 +1,6 @@
 # PaperFlow
 
-本项目为南开大学软件学院企业级ai结课大作业项目。  
+本项目为南开大学软件学院 **企业级ai** 结课大作业项目。  
 PaperFlow是个人文献阅读与笔记管理系统，面向大学生与科研初学者。采用 React + Vite + TypeScript + Ant Design + ECharts、Flask + SQLAlchemy、SQLite，前后端通过 REST API 通信。
 
 ## 当前进度
