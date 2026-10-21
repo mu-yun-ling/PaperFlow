@@ -1,0 +1,23 @@
+import { useCallback, useEffect, useState } from 'react';
+
+// 页面切换或重试时取消旧请求，防止慢响应覆盖新页面的数据。
+export function useResource<T>(loader: (signal: AbortSignal) => Promise<T>) {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+  const reload = useCallback(() => setRevision((value) => value + 1), []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    loader(controller.signal)
+      .then((result) => { if (!controller.signal.aborted) setData(result); })
+      .catch((reason: unknown) => { if (!controller.signal.aborted) setError(reason); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [loader, revision]);
+
+  return { data, error, loading, reload, setData };
+}

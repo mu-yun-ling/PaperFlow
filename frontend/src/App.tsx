@@ -1,7 +1,7 @@
-import { ConfigProvider } from 'antd';
+import { App as AntApp, ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { AppShell } from './components/AppShell';
-import { OverviewPage } from './pages/OverviewPage';
+import { PageRouter } from './pages/PageRouter';
 
 export default function App() {
   return (
@@ -9,7 +9,7 @@ export default function App() {
       colorPrimary: '#245e4f', borderRadius: 12, colorText: '#233b34',
       fontFamily: 'Inter, "Segoe UI", "Microsoft YaHei", sans-serif',
     } }}>
-      <AppShell><OverviewPage /></AppShell>
+      <AntApp><AppShell><PageRouter /></AppShell></AntApp>
     </ConfigProvider>
   );
 }

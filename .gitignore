@@ -34,7 +34,6 @@ Desktop.ini
 # Build
 build/
 coverage/
-prompt/
 
+# Codex 开发提示词
 prompt/
-.pytest_cache/

@@ -18,3 +18,50 @@ export interface Dashboard {
 }
 
 export interface ApiResponse<T> { data: T }
+
+export interface PaperTag {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface TagSummary extends PaperTag { paper_count: number }
+
+export interface Note {
+  id: number;
+  paper_id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaperInput {
+  title: string;
+  authors: string;
+  year: number | null;
+  venue: string;
+  doi: string | null;
+  url: string | null;
+  abstract: string;
+  research_topic: string;
+  reading_status: ReadingStatus;
+  is_favorite: boolean;
+  tag_ids: number[];
+}
+
+export interface Paper extends Omit<PaperInput, 'tag_ids'> {
+  id: number;
+  tags: PaperTag[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaperDetail extends Paper { notes: Note[] }
+
+export interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
