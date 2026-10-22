@@ -1,4 +1,4 @@
-import type { ApiResponse, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, TagSummary, PaperTag } from '../types/api';
+import type { ApiResponse, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, PaperFilters, TagSummary, PaperTag } from '../types/api';
 
 export class ApiError extends Error {
   status: number;
@@ -16,6 +16,15 @@ export class ApiError extends Error {
 
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '操作失败，请稍后重试。';
+}
+
+export function paperListParams(page: number, filters: PaperFilters = {}): string {
+  const params = new URLSearchParams({ page: String(page), page_size: '20' });
+  for (const key of ['title', 'author', 'tag_id', 'year', 'reading_status', 'research_topic', 'sort_by', 'sort_order'] as const) {
+    const value = filters[key];
+    if (value !== undefined && String(value).trim() !== '') params.set(key, String(value).trim());
+  }
+  return params.toString();
 }
 
 async function request<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
@@ -48,7 +57,8 @@ export const api = {
   health: (signal?: AbortSignal) => request<Health>('/health', { signal }),
   dashboard: (signal?: AbortSignal) => request<Dashboard>('/dashboard', { signal }),
   papers: {
-    list: (page = 1, signal?: AbortSignal) => request<Page<Paper>>(`/papers?page=${page}&page_size=20`, { signal }),
+    list: (page = 1, signal?: AbortSignal, filters: PaperFilters = {}) =>
+      request<Page<Paper>>(`/papers?${paperListParams(page, filters)}`, { signal }),
     get: (id: number, signal?: AbortSignal) => request<PaperDetail>(`/papers/${id}`, { signal }),
     create: (body: PaperInput) => request<PaperDetail>('/papers', { method: 'POST', body }),
     update: (id: number, body: Partial<PaperInput>) => request<PaperDetail>(`/papers/${id}`, { method: 'PATCH', body }),

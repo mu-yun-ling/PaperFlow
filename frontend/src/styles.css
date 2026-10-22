@@ -60,6 +60,15 @@ footer { padding: 24px 0 30px; border-top: 1px solid #dfe4dc; font-size: 12px; c
 .tag-create-row > button { margin-top: 30px; }
 .tag-create-card .ant-alert { margin-top: 20px; }
 .ant-tag { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.paper-filter-card { margin-bottom: 16px; }
+.paper-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
+.paper-filter-grid .ant-form-item { margin-bottom: 16px; }
+.filter-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.filter-footer > button { flex-shrink: 0; }
+.paper-filter-card .ant-alert { margin-top: 16px; }
+.query-summary { color: #697764; margin: 12px 0; }
+@media (max-width: 1000px) { .paper-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .paper-filter-grid { grid-template-columns: minmax(0, 1fr); } .filter-footer { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 760px) {
   .form-grid { grid-template-columns: minmax(0, 1fr); }
   .page-heading h1, .detail-title h1 { font-size: 25px; }

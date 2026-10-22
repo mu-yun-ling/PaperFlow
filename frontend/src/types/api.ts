@@ -6,6 +6,17 @@ export interface Health {
 
 export type ReadingStatus = 'not_started' | 'reading' | 'completed';
 
+export interface PaperFilters {
+  title?: string;
+  author?: string;
+  tag_id?: number;
+  year?: number;
+  reading_status?: ReadingStatus;
+  research_topic?: string;
+  sort_by?: 'year' | 'created_at' | 'updated_at';
+  sort_order?: 'asc' | 'desc';
+}
+
 export interface Dashboard {
   total: number;
   not_started: number;

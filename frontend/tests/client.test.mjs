@@ -37,11 +37,29 @@ test('写请求采用 JSON 且正确保留中文、换行、false 和 null', asy
   assert.deepEqual(JSON.parse(options.body), payload);
 });
 
-test('列表只传分页参数，不提前加入搜索筛选', async () => {
+test('未提供筛选时仍兼容原有分页请求', async () => {
   const response = { items: [], total: 0, page: 2, page_size: 20, pages: 0 };
   const fetchMock = mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ data: response })));
   assert.deepEqual(await api.papers.list(2), response);
   assert.equal(fetchMock.mock.calls[0].arguments[0], '/api/papers?page=2&page_size=20');
+});
+
+test('组合条件和排序随分页发送，中文与特殊字符不改变参数含义', async () => {
+  const fetchMock = mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ data: { items: [] } })));
+  const filters = { title: ' 中文 & 100%_+ ', author: '王/李', tag_id: 2, year: 2024,
+    reading_status: 'reading', research_topic: 'A&B', sort_by: 'year', sort_order: 'asc' };
+  await api.papers.list(3, undefined, filters);
+  const params = new URL(fetchMock.mock.calls[0].arguments[0], 'http://localhost').searchParams;
+  assert.deepEqual(Object.fromEntries(params), { page: '3', page_size: '20', ...Object.fromEntries(
+    Object.entries(filters).map(([key, value]) => [key, String(value).trim()])) });
+});
+
+test('清空条件不会发送空字符串或 undefined，也不会残留上次参数', async () => {
+  const fetchMock = mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ data: { items: [] } })));
+  await api.papers.list(2, undefined, { title: '旧条件', year: 2024, sort_by: 'year' });
+  await api.papers.list(1, undefined, { title: '  ', author: '', year: undefined, sort_by: 'created_at', sort_order: 'desc' });
+  const params = new URL(fetchMock.mock.calls[1].arguments[0], 'http://localhost').searchParams;
+  assert.deepEqual(Object.fromEntries(params), { page: '1', page_size: '20', sort_by: 'created_at', sort_order: 'desc' });
 });
 
 test('网络失败显示可操作的连接提示', async () => {
