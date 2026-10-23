@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-type Route = { page: 'papers' | 'new' | 'tags' | 'not-found' }
+type Route = { page: 'papers' | 'new' | 'tags' | 'dashboard' | 'not-found' }
   | { page: 'detail' | 'edit'; id: number };
 
 export function parseRoute(hash: string): Route {
@@ -8,6 +8,7 @@ export function parseRoute(hash: string): Route {
   if (path === '/papers' || path === '/') return { page: 'papers' };
   if (path === '/papers/new') return { page: 'new' };
   if (path === '/tags') return { page: 'tags' };
+  if (path === '/dashboard') return { page: 'dashboard' };
   const match = /^\/papers\/([1-9]\d*)(\/edit)?$/.exec(path);
   if (match && Number.isSafeInteger(Number(match[1]))) {
     return { page: match[2] ? 'edit' : 'detail', id: Number(match[1]) };

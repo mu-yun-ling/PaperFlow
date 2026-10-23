@@ -14,8 +14,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Tag variant="filled" color="green">个人文献空间</Tag>
       </header>
       <nav className="app-nav" aria-label="主导航">
-        <a href="#/papers" aria-current={route.page !== 'tags' ? 'page' : undefined}>文献库</a>
+        <a href="#/papers" aria-current={['papers', 'new', 'edit', 'detail'].includes(route.page) ? 'page' : undefined}>文献库</a>
         <a href="#/tags" aria-current={route.page === 'tags' ? 'page' : undefined}>标签管理</a>
+        <a href="#/dashboard" aria-current={route.page === 'dashboard' ? 'page' : undefined}>阅读概览</a>
       </nav>
       <main>{children}</main>
       <footer>PaperFlow <span>文献 · 思考 · 连接</span></footer>

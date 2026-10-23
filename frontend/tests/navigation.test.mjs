@@ -10,6 +10,7 @@ test('页面地址可区分列表、新增、编辑、详情和标签', () => {
   assert.deepEqual(parseRoute('#/papers/12'), { page: 'detail', id: 12 });
   assert.deepEqual(parseRoute('#/papers/12/edit'), { page: 'edit', id: 12 });
   assert.deepEqual(parseRoute('#/tags'), { page: 'tags' });
+  assert.deepEqual(parseRoute('#/dashboard'), { page: 'dashboard' });
 });
 
 test('无效地址和无法安全表示的 ID 显示页面不存在', () => {
