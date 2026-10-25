@@ -1,4 +1,4 @@
-import type { ApiResponse, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, PaperFilters, TagSummary, PaperTag } from '../types/api';
+import type { ApiResponse, Attachment, ReadingProgress, PdfExtraction, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, PaperFilters, TagSummary, PaperTag } from '../types/api';
 
 export class ApiError extends Error {
   status: number;
@@ -27,17 +27,19 @@ export function paperListParams(page: number, filters: PaperFilters = {}): strin
   return params.toString();
 }
 
-async function request<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
-  const timeout = AbortSignal.timeout(15000);
+async function request<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal; binary?: boolean } = {}): Promise<T> {
+  const multipart = options.body instanceof FormData;
+  const timeout = AbortSignal.timeout(multipart || options.binary ? 60000 : 15000);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   try {
     const response = await fetch(`/api${path}`, {
       method: options.method ?? 'GET',
       signal,
-      headers: options.body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      headers: options.body === undefined || multipart ? undefined : { 'Content-Type': 'application/json' },
+      body: multipart ? options.body as FormData : options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     if (response.status === 204) return undefined as T;
+    if (response.ok && options.binary) return await response.blob() as T;
     const body = await response.json().catch(() => null);
     if (!response.ok) {
       throw new ApiError(body?.error?.message ?? '服务暂时不可用，请确认后端已启动。',
@@ -53,6 +55,20 @@ async function request<T>(path: string, options: { method?: string; body?: unkno
   }
 }
 
+export function paperRequestBody(body: Partial<PaperInput>, file?: File): Partial<PaperInput> | FormData {
+  if (!file) return body;
+  const data = new FormData();
+  data.append('data', JSON.stringify(body));
+  data.append('file', file);
+  return data;
+}
+
+function fileBody(file: File): FormData {
+  const data = new FormData();
+  data.append('file', file);
+  return data;
+}
+
 export const api = {
   health: (signal?: AbortSignal) => request<Health>('/health', { signal }),
   dashboard: (signal?: AbortSignal) => request<Dashboard>('/dashboard', { signal }),
@@ -60,9 +76,17 @@ export const api = {
     list: (page = 1, signal?: AbortSignal, filters: PaperFilters = {}) =>
       request<Page<Paper>>(`/papers?${paperListParams(page, filters)}`, { signal }),
     get: (id: number, signal?: AbortSignal) => request<PaperDetail>(`/papers/${id}`, { signal }),
-    create: (body: PaperInput) => request<PaperDetail>('/papers', { method: 'POST', body }),
-    update: (id: number, body: Partial<PaperInput>) => request<PaperDetail>(`/papers/${id}`, { method: 'PATCH', body }),
+    create: (body: PaperInput, file?: File) => request<PaperDetail>('/papers', { method: 'POST', body: paperRequestBody(body, file) }),
+    update: (id: number, body: Partial<PaperInput>, file?: File) => request<PaperDetail>(`/papers/${id}`, { method: 'PATCH', body: paperRequestBody(body, file) }),
     delete: (id: number) => request<void>(`/papers/${id}`, { method: 'DELETE' }),
+  },
+  files: {
+    progress: (id: number, body: { total_pages: number; current_page: number; read: boolean }) =>
+      request<ReadingProgress>(`/files/${id}/reading-progress`, { method: 'PUT', body }),
+    parse: (file: File, signal?: AbortSignal) => request<PdfExtraction>('/papers/parse-pdf', { method: 'POST', body: fileBody(file), signal }),
+    uploadNote: (paperId: number, file: File) => request<Attachment>(`/papers/${paperId}/note-attachments`, { method: 'POST', body: fileBody(file) }),
+    read: (id: number, signal?: AbortSignal) => request<Blob>(`/files/${id}`, { binary: true, signal }),
+    delete: (id: number) => request<void>(`/files/${id}`, { method: 'DELETE' }),
   },
   tags: {
     list: (signal?: AbortSignal) => request<TagSummary[]>('/tags', { signal }),

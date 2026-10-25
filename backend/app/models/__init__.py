@@ -20,7 +20,6 @@ class Paper(db.Model):
     __tablename__ = "papers"
     __table_args__ = (
         db.CheckConstraint("length(trim(title)) > 0", name="ck_paper_title"),
-        db.CheckConstraint("length(trim(authors)) > 0", name="ck_paper_authors"),
         db.CheckConstraint("year IS NULL OR year BETWEEN 1000 AND 9999", name="ck_paper_year"),
         db.CheckConstraint("reading_status IN ('not_started', 'reading', 'completed')", name="ck_paper_status"),
     )
@@ -28,7 +27,7 @@ class Paper(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(500), nullable=False)
     title_key = db.Column(db.String(500), nullable=False, unique=True)
-    authors = db.Column(db.String(1000), nullable=False)
+    authors = db.Column(db.String(1000), nullable=False, default="")
     year = db.Column(db.Integer, index=True)
     venue = db.Column(db.String(500), nullable=False, default="")
     doi = db.Column(db.String(255), unique=True)
@@ -42,6 +41,8 @@ class Paper(db.Model):
     tags = db.relationship("Tag", secondary=paper_tags, back_populates="papers", order_by="Tag.id")
     notes = db.relationship("Note", back_populates="paper", cascade="all, delete-orphan", passive_deletes=True,
                             order_by="(Note.updated_at.desc(), Note.id.desc())")
+    attachments = db.relationship("Attachment", cascade="all, delete-orphan", passive_deletes=True,
+                                  order_by="Attachment.id.desc()")
 
 
 class Tag(db.Model):
@@ -65,3 +66,34 @@ class Note(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
     updated_at = db.Column(db.DateTime, nullable=False, default=utc_now, onupdate=utc_now)
     paper = db.relationship("Paper", back_populates="notes")
+
+
+class Attachment(db.Model):
+    __tablename__ = "attachments"
+    __table_args__ = (
+        db.CheckConstraint("kind IN ('paper', 'note')", name="ck_attachment_kind"),
+        db.Index("uq_paper_pdf", "paper_id", unique=True, sqlite_where=db.text("kind = 'paper'")),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    paper_id = db.Column(db.Integer, db.ForeignKey("papers.id", ondelete="CASCADE"), nullable=False, index=True)
+    kind = db.Column(db.String(10), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    path = db.Column(db.String(100), nullable=False, unique=True)
+    mime_type = db.Column(db.String(100), nullable=False)
+    size = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
+    reading_progress = db.relationship("ReadingProgress", uselist=False, cascade="all, delete-orphan", passive_deletes=True)
+
+
+class ReadingProgress(db.Model):
+    __tablename__ = "reading_progress"
+    __table_args__ = (
+        db.CheckConstraint("total_pages > 0 AND current_page BETWEEN 1 AND total_pages AND max_page BETWEEN 0 AND total_pages", name="ck_reading_pages"),
+    )
+    attachment_id = db.Column(db.Integer, db.ForeignKey("attachments.id", ondelete="CASCADE"), primary_key=True)
+    total_pages = db.Column(db.Integer, nullable=False)
+    current_page = db.Column(db.Integer, nullable=False, default=1)
+    max_page = db.Column(db.Integer, nullable=False, default=0)
+    last_read_at = db.Column(db.DateTime)

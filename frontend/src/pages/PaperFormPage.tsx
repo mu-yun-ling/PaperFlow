@@ -15,14 +15,15 @@ export function PaperFormPage({ id }: { id?: number }) {
   }, [id]);
   const { data, loading, error, reload } = useResource(load);
 
-  async function save(values: PaperInput) {
-    const paper = id ? await api.papers.update(id, values) : await api.papers.create(values);
+  async function save(values: PaperInput, file?: File) {
+    const paper = id ? await api.papers.update(id, values, file) : await api.papers.create(values, file);
     message.success(id ? '文献已更新' : '文献已添加');
     navigate(`/papers/${paper.id}`);
   }
 
   return <>
-    <div className="page-heading"><div><h1>{id ? '编辑文献' : '新增文献'}</h1><p>标题和作者必填，其余信息可以稍后补充。</p></div></div>
+    <div className="page-heading"><div><h1>{id ? '编辑文献' : '新增文献'}</h1>
+      <p>上传 PDF 自动整理信息，也可以直接填写。只有标题必填。</p></div></div>
     {loading ? <Skeleton active paragraph={{ rows: 8 }} /> : error ? <LoadError error={error} retry={reload} /> : data &&
       <PaperForm paper={data.paper} tags={data.tags} onSave={save} onCancel={() => navigate(id ? `/papers/${id}` : '/papers')} />}
   </>;

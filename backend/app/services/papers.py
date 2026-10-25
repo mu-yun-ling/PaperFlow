@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload
 
 from ..errors import APIError
 from ..extensions import db
-from ..models import Paper, Tag, utc_now
+from ..models import Attachment, Paper, Tag, utc_now
 from ..serializers import paper_dict
 from .validation import MAX_RESOURCE_ID, STATUSES, doi_value, normalized_key, query_integer, text_field, url_value, year_value
 
@@ -34,14 +34,14 @@ def resolve_tags(ids):
     return tags
 
 
-def save_paper(body, paper=None):
+def save_paper(body, paper=None, commit=True):
     creating = paper is None
     if creating:
-        for field, label in (("title", "标题"), ("authors", "作者")):
+        for field, label in (("title", "标题"),):
             if field not in body:
                 raise APIError(f"{label}不能为空")
     values = {}
-    specifications = {"title": ("标题", 500, True), "authors": ("作者", 1000, True),
+    specifications = {"title": ("标题", 500, True), "authors": ("作者", 1000, False),
                       "venue": ("期刊/会议", 500, False), "abstract": ("摘要", 50000, False),
                       "research_topic": ("研究主题", 200, False)}
     for field, (label, maximum, required) in specifications.items():
@@ -59,6 +59,13 @@ def save_paper(body, paper=None):
         if body["reading_status"] not in STATUSES:
             raise APIError("阅读状态必须是 not_started、reading 或 completed")
         values["reading_status"] = body["reading_status"]
+        if paper is not None:
+            source = next((item for item in paper.attachments if item.kind == "paper"), None)
+            progress = source.reading_progress if source else None
+            if paper.reading_status == "completed":
+                values["reading_status"] = "completed"
+            elif progress:
+                values["reading_status"] = "completed" if progress.max_page == progress.total_pages else "reading" if progress.max_page else "not_started"
     if "is_favorite" in body:
         if type(body["is_favorite"]) is not bool:
             raise APIError("是否收藏必须是布尔值")
@@ -82,7 +89,10 @@ def save_paper(body, paper=None):
         paper.tags = tags
     if not creating:
         paper.updated_at = utc_now()
-    db.session.commit()
+    if commit:
+        db.session.commit()
+    else:
+        db.session.flush()
     return paper
 
 
@@ -123,7 +133,7 @@ def list_papers(args):
     order = column.asc() if sort_order == "asc" else column.desc()
     tie_breaker = Paper.id.asc() if sort_order == "asc" else Paper.id.desc()
     total = db.session.scalar(select(func.count(Paper.id)).where(*conditions))
-    query = select(Paper).where(*conditions).options(selectinload(Paper.tags))
+    query = select(Paper).where(*conditions).options(selectinload(Paper.tags), selectinload(Paper.attachments).selectinload(Attachment.reading_progress))
     items = db.session.scalars(query.order_by(column.is_(None), order, tie_breaker)
                                .offset((page - 1) * page_size).limit(page_size)).all()
     return {"items": [paper_dict(item) for item in items], "total": total, "page": page,

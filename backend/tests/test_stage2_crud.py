@@ -56,7 +56,7 @@ def test_out_of_range_tag_link(client, make_paper, method):
 
 
 @pytest.mark.parametrize("change", [
-    {"title": " \t\n"}, {"authors": ""}, {"year": 999}, {"year": "2024"},
+    {"title": " \t\n"}, {"authors": None}, {"year": 999}, {"year": "2024"},
     {"year": False}, {"doi": "invalid"}, {"tag_ids": [True]},
 ])
 def test_invalid_edit_preserves_all_fields(client, make_paper, change):

@@ -6,7 +6,8 @@ from app.extensions import db
 
 @pytest.fixture()
 def app(tmp_path):
-    application = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///" + (tmp_path / "test.db").as_posix()})
+    application = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///" + (tmp_path / "test.db").as_posix(),
+                              "UPLOAD_FOLDER": str(tmp_path / "uploads")})
     with application.app_context():
         db.create_all()
     yield application

@@ -15,7 +15,9 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///paperflow.db"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        MAX_CONTENT_LENGTH=1024 * 1024,
+        MAX_CONTENT_LENGTH=26 * 1024 * 1024,
+        MAX_FILE_SIZE=25 * 1024 * 1024,
+        UPLOAD_FOLDER=str(Path(app.instance_path) / "uploads"),
     )
     if test_config:
         app.config.update(test_config)
@@ -29,10 +31,20 @@ def create_app(test_config=None):
     app.register_blueprint(api, url_prefix="/api")
     register_error_handlers(app)
 
+    @app.before_request
+    def limit_json_body():
+        from flask import request
+        from werkzeug.exceptions import RequestEntityTooLarge
+        if request.is_json and request.content_length and request.content_length > 1024 * 1024:
+            raise RequestEntityTooLarge()
+
     @app.cli.command("init-db")
     def init_db():
         """创建缺失的数据表，保留已有数据。"""
-        db.create_all()
+        from .migrations import upgrade_database
+        upgrade_database()
+        from .services.files import recover_storage
+        recover_storage()
         click.echo("PaperFlow 数据库已初始化（已有数据保持不变）。")
 
     return app

@@ -1,61 +1,66 @@
 import { useCallback, useState } from 'react';
-import { App, Button, Card, Descriptions, Select, Skeleton, Space, Switch, Tag } from 'antd';
+import { App, Button, Skeleton, Space, Tabs, Tag } from 'antd';
 import { api, errorMessage } from '../api/client';
-import { DeletePaperButton } from '../components/DeletePaperButton';
+import { PaperActions } from '../components/PaperActions';
 import { LoadError } from '../components/LoadError';
 import { NotesPanel } from '../components/NotesPanel';
+import { FilesPanel } from '../components/FilesPanel';
+import { ReadingStatusTag } from '../components/ReadingStatusTag';
 import { useResource } from '../hooks/useResource';
 import { navigate } from '../routing';
-import type { PaperInput, ReadingStatus } from '../types/api';
-import { formatTime, readingOptions, safeExternalUrl } from '../utils/papers';
+import { formatTime, safeExternalUrl } from '../utils/papers';
 
 export function PaperDetailPage({ id }: { id: number }) {
   const { message } = App.useApp();
   const load = useCallback((signal: AbortSignal) => api.papers.get(id, signal), [id]);
   const { data: paper, error, loading, reload, setData } = useResource(load);
   const [saving, setSaving] = useState(false);
+  const [notesTab, setNotesTab] = useState('notes');
+  const [createRequest, setCreateRequest] = useState(0);
 
-  async function update(values: Partial<PaperInput>) {
-    if (saving) return;
+  async function toggleFavorite() {
+    if (saving || !paper) return;
     setSaving(true);
-    try { setData(await api.papers.update(id, values)); message.success('已保存'); }
+    try { setData(await api.papers.update(id, { is_favorite: !paper.is_favorite })); }
     catch (reason) { message.error(errorMessage(reason)); }
     finally { setSaving(false); }
   }
-
   if (loading) return <div className="page-loading"><Skeleton active paragraph={{ rows: 10 }} /></div>;
   if (error) return <div className="page-loading"><LoadError error={error} retry={reload} /></div>;
   if (!paper) return null;
   const externalUrl = safeExternalUrl(paper.url);
   const doiUrl = paper.doi ? `https://doi.org/${paper.doi.split('/').map(encodeURIComponent).join('/')}` : undefined;
 
-  return <>
-    <div className="detail-toolbar"><Button href="#/papers">返回文献列表</Button><Space>
-      <Button href={`#/papers/${id}/edit`} disabled={saving}>编辑文献</Button>
-      <DeletePaperButton id={id} onDeleted={() => navigate('/papers')} disabled={saving} />
+  return <div className="paper-detail">
+    <div className="detail-toolbar"><a className="back-link" href="#/papers">← 返回文献库</a><Space>
+      <Button type="text" onClick={toggleFavorite} loading={saving}>{paper.is_favorite ? '★ 已收藏' : '☆ 收藏文献'}</Button>
+      <PaperActions id={id} onDeleted={() => navigate('/papers')} disabled={saving} />
     </Space></div>
-    <div className="detail-title"><h1>{paper.title}</h1><p className="break-text">{paper.authors}</p></div>
-    <Card className="detail-card">
-      <div className="reading-controls">
-        <Space><label htmlFor="detail-reading-status">阅读状态</label><Select id="detail-reading-status" aria-label="阅读状态"
-          value={paper.reading_status} options={readingOptions} disabled={saving} className="status-select"
-          onChange={(status: ReadingStatus) => update({ reading_status: status })} /></Space>
-        <Space><span id="favorite-label">收藏</span><Switch aria-labelledby="favorite-label" checked={paper.is_favorite}
-          checkedChildren="已收藏" unCheckedChildren="未收藏" disabled={saving} loading={saving}
-          onChange={(value) => update({ is_favorite: value })} /></Space>
-      </div>
-      <Descriptions column={{ xs: 1, sm: 2 }} size="small" items={[
-        { key: 'year', label: '年份', children: paper.year ?? '未填写' },
-        { key: 'venue', label: '期刊 / 会议', children: paper.venue || '未填写' },
-        { key: 'doi', label: 'DOI', children: doiUrl ? <a href={doiUrl} target="_blank" rel="noopener noreferrer" className="break-text">{paper.doi}</a> : '未填写' },
-        { key: 'url', label: '原文链接', children: externalUrl ? <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="break-text">{paper.url}</a> : '未填写' },
-        { key: 'topic', label: '研究主题', children: paper.research_topic || '未填写' },
-        { key: 'tags', label: '标签', children: paper.tags.length ? <Space wrap size={[0, 4]}>{paper.tags.map((tag) => <Tag key={tag.id}>{tag.name}</Tag>)}</Space> : '无标签' },
-        { key: 'created', label: '创建时间', children: formatTime(paper.created_at) },
-        { key: 'updated', label: '更新时间', children: formatTime(paper.updated_at) },
-      ]} />
-      <div className="abstract-section"><h2>摘要</h2><p className="note-content">{paper.abstract || '暂未填写摘要。'}</p></div>
-    </Card>
-    <NotesPanel paperId={id} />
-  </>;
+    <header className="detail-title"><div className="detail-overline"><span>READ · THINK · CONNECT</span><ReadingStatusTag status={paper.reading_status} /></div>
+      <h1>{paper.title}</h1><p className="break-text">{paper.authors || '作者未填写'}{paper.year ? ` · ${paper.year}` : ''}</p>
+      {!!paper.tags.length && <Space wrap size={[4, 6]}>{paper.tags.map(tag => <Tag key={tag.id}>{tag.name}</Tag>)}</Space>}
+    </header>
+    <FilesPanel paperId={id} paperFile={paper.paper_file} onChanged={reload} />
+    <div className="detail-content-grid"><div className="reading-main">
+      <section className="abstract-card"><div className="section-caption">ABSTRACT</div><h2>摘要</h2>
+        <p className="note-content">{paper.abstract || '还没有摘要。添加几句话，为下一次阅读留下线索。'}</p></section>
+      <section className="reading-notes" id="paper-notes"><div className="notes-title-row"><div><div className="section-caption">YOUR IDEAS</div><h2>我的阅读笔记</h2></div>
+        <Space wrap><Button onClick={() => setNotesTab('attachments')}>上传笔记</Button>
+          <Button type="primary" onClick={() => { setNotesTab('notes'); setCreateRequest(value => value + 1); }}>＋ 新建笔记</Button></Space></div>
+        <Tabs activeKey={notesTab} onChange={setNotesTab} items={[
+          { key: 'notes', label: '在线笔记', children: <NotesPanel paperId={id} hideCreate createRequest={createRequest} onCreateHandled={() => setCreateRequest(0)} /> },
+          { key: 'attachments', label: `笔记附件${paper.note_attachments.length ? ` · ${paper.note_attachments.length}` : ''}`,
+            children: <FilesPanel paperId={id} notes={paper.note_attachments} onChanged={reload} /> },
+        ]} />
+      </section>
+    </div><aside className="paper-context"><section className="paper-info-card"><h2>论文信息</h2>
+      <dl className="paper-metadata"><dt>研究主题</dt><dd>{paper.research_topic || '尚未归类'}</dd>
+        <dt>作者</dt><dd>{paper.authors || '未填写'}</dd><dt>发表年份</dt><dd>{paper.year || '未填写'}</dd>
+        {paper.venue && <><dt>期刊 / 会议</dt><dd>{paper.venue}</dd></>}
+        {doiUrl && <><dt>DOI</dt><dd><a href={doiUrl} target="_blank" rel="noopener noreferrer">{paper.doi} ↗</a></dd></>}
+        {externalUrl && <><dt>来源</dt><dd><a href={externalUrl} target="_blank" rel="noopener noreferrer">访问原始链接 ↗</a></dd></>}
+      </dl><Button type="text" className="metadata-edit" href={`#/papers/${id}/edit`}>补充论文信息 ↗</Button>
+      <details className="paper-timestamps"><summary>收录信息</summary><p>创建于 {formatTime(paper.created_at)}</p><p>更新于 {formatTime(paper.updated_at)}</p></details>
+    </section><div className="reading-tip"><span>留一点空间给思考</span><p>不止收藏论文，也收集自己的理解。公式、疑问和灵感，都可以留在笔记里。</p></div></aside></div>
+  </div>;
 }

@@ -65,9 +65,36 @@ export interface Paper extends Omit<PaperInput, 'tag_ids'> {
   tags: PaperTag[];
   created_at: string;
   updated_at: string;
+  reading_progress: ReadingProgress | null;
 }
 
-export interface PaperDetail extends Paper { notes: Note[] }
+export interface ReadingProgress {
+  total_pages: number;
+  current_page: number;
+  max_page: number;
+  percent: number;
+  last_read_at: string | null;
+}
+
+export interface Attachment {
+  id: number;
+  paper_id: number;
+  kind: 'paper' | 'note';
+  filename: string;
+  mime_type: string;
+  size: number;
+  created_at: string;
+  reading_progress: ReadingProgress | null;
+}
+
+export interface PdfExtraction {
+  fields: Pick<PaperInput, 'title' | 'authors' | 'year' | 'doi' | 'abstract'>;
+  recognized: string[];
+  missing: string[];
+  warning: string;
+}
+
+export interface PaperDetail extends Paper { notes: Note[]; paper_file: Attachment | null; note_attachments: Attachment[] }
 
 export interface Page<T> {
   items: T[];

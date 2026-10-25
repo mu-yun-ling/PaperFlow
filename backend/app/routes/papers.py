@@ -3,9 +3,10 @@ from flask import jsonify, request
 from . import api
 from ..models import Paper, Tag
 from ..serializers import paper_dict
-from ..services.library import delete_resource, set_paper_tag
+from ..services.library import set_paper_tag
 from ..services.papers import PAPER_FIELDS, get_resource, list_papers, save_paper
-from ..services.validation import json_body
+from ..services.files import file_transaction, paper_body
+from ..extensions import db
 
 
 @api.get("/papers")
@@ -15,7 +16,11 @@ def paper_index():
 
 @api.post("/papers")
 def paper_create():
-    paper = save_paper(json_body(PAPER_FIELDS))
+    body, upload = paper_body(PAPER_FIELDS)
+    with file_transaction() as changes:
+        paper = save_paper(body, commit=False)
+        if upload:
+            changes.attach(paper, upload, "paper")
     return jsonify(data=paper_dict(paper, detail=True)), 201, {"Location": f"/api/papers/{paper.id}"}
 
 
@@ -27,12 +32,21 @@ def paper_show(paper_id):
 @api.patch("/papers/<int:paper_id>")
 def paper_update(paper_id):
     paper = get_resource(Paper, paper_id, "文献")
-    return jsonify(data=paper_dict(save_paper(json_body(PAPER_FIELDS), paper), detail=True))
+    body, upload = paper_body(PAPER_FIELDS)
+    with file_transaction() as changes:
+        save_paper(body, paper, commit=False)
+        if upload:
+            changes.attach(paper, upload, "paper")
+    return jsonify(data=paper_dict(paper, detail=True))
 
 
 @api.delete("/papers/<int:paper_id>")
 def paper_delete(paper_id):
-    delete_resource(get_resource(Paper, paper_id, "文献"))
+    paper = get_resource(Paper, paper_id, "文献")
+    with file_transaction() as changes:
+        for item in paper.attachments:
+            changes.retire(item)
+        db.session.delete(paper)
     return "", 204
 
 

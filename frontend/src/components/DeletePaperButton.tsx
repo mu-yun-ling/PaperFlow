@@ -21,10 +21,10 @@ export function DeletePaperButton({ id, onDeleted, disabled = false }: {
     finally { setBusy(false); }
   }
 
-  return <Popconfirm title="删除这篇文献？" description="关联笔记也会删除，标签本身会保留。此操作无法撤销。"
+  return <Popconfirm title="删除这篇文献？" description="论文原文、在线笔记及笔记附件会一并删除，标签本身会保留。此操作无法撤销。"
     open={open} onOpenChange={(value) => { if (!busy) setOpen(value); }} onConfirm={remove}
     onCancel={() => setOpen(false)} okText="确认删除" cancelText="取消"
     okButtonProps={{ danger: true, loading: busy }} cancelButtonProps={{ disabled: busy }}>
-    <Button danger size="small" disabled={disabled} loading={busy}>删除</Button>
+    <Button danger type="text" size="small" disabled={disabled} loading={busy}>删除</Button>
   </Popconfirm>;
 }

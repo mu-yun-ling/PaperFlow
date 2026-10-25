@@ -44,9 +44,11 @@ def test_statistics_follow_create_status_year_and_delete(client, make_paper):
     assert_dashboard(client)
     paper = make_paper(title='动态统计', year=2023)
     assert assert_dashboard(client)['not_started'] == 1
-    for status in ('reading', 'completed', 'not_started'):
+    for status in ('reading', 'completed'):
         assert client.patch(f"/api/papers/{paper['id']}", json={'reading_status': status}).status_code == 200
         assert assert_dashboard(client)[status] == 1
+    assert client.patch(f"/api/papers/{paper['id']}", json={'reading_status': 'not_started'}).status_code == 200
+    assert assert_dashboard(client)['completed'] == 1  # 第六阶段：完成状态保持，不随回看退回。
     for year in (2025, None):
         assert client.patch(f"/api/papers/{paper['id']}", json={'year': year}).status_code == 200
         assert assert_dashboard(client)['by_year'] == [{'year': year, 'count': 1}]

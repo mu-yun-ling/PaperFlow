@@ -93,7 +93,7 @@ def test_http_invalid_and_duplicate_data(http_api):
     call = http_api
     paper = call("POST", "/papers", 201, {"title": "验收文献", "authors": "作者", "doi": "10.1000/test"})
     path = f"/papers/{paper['id']}"
-    for change in ({"title": " "}, {"authors": "\n"}, {"year": "2024"}, {"year": 999}, {"tag_ids": [2**63]}):
+    for change in ({"title": " "}, {"authors": None}, {"year": "2024"}, {"year": 999}, {"tag_ids": [2**63]}):
         call("POST", "/papers", 400, {"title": "新文献", "authors": "作者", **change})
         call("PATCH", path, 400, change)
     assert call("POST", "/papers", 409, {"title": " 验收文献 ", "authors": "作者"})["details"]["field"] == "title"

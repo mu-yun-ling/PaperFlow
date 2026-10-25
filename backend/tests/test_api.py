@@ -57,7 +57,7 @@ def test_complete_reading_workflow(client, make_paper, app):
 
 
 @pytest.mark.parametrize("override", [
-    {"title": " \n "}, {"authors": ""}, {"title": None}, {"authors": []},
+    {"title": " \n "}, {"authors": None}, {"title": None}, {"authors": []},
     {"title": "a" * 501}, {"year": "2024"}, {"year": True}, {"year": 2024.5}, {"year": 999},
     {"year": datetime.now(timezone.utc).year + 2}, {"reading_status": "done"},
     {"reading_status": []}, {"is_favorite": 1}, {"doi": "bad-doi"}, {"doi": "10.1000/a b"},
@@ -74,7 +74,7 @@ def test_invalid_paper(client, override):
     assert client.get("/api/dashboard").json["data"]["total"] == 0
 
 
-@pytest.mark.parametrize("payload", [{"title": "x"}, {"authors": "x"}, {}, [], None, "text"])
+@pytest.mark.parametrize("payload", [{"title": ""}, {"authors": "x"}, {}, [], None, "text"])
 def test_missing_fields_and_invalid_json_shape(client, payload):
     response = client.post("/api/papers", data=json.dumps(payload), content_type="application/json")
     assert response.status_code == 400

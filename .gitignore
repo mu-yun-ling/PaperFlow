@@ -7,6 +7,7 @@ env/
 
 # Flask
 instance/
+uploads/
 *.db
 *.sqlite
 *.sqlite3
@@ -14,6 +15,7 @@ instance/
 # Node
 node_modules/
 dist/
+frontend/public/pdfjs/
 
 # Environment variables
 .env
