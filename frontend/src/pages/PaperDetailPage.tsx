@@ -5,6 +5,7 @@ import { PaperActions } from '../components/PaperActions';
 import { LoadError } from '../components/LoadError';
 import { NotesPanel } from '../components/NotesPanel';
 import { FilesPanel } from '../components/FilesPanel';
+import { AIPanel } from '../components/AIPanel';
 import { ReadingStatusTag } from '../components/ReadingStatusTag';
 import { useResource } from '../hooks/useResource';
 import { navigate } from '../routing';
@@ -17,6 +18,7 @@ export function PaperDetailPage({ id }: { id: number }) {
   const [saving, setSaving] = useState(false);
   const [notesTab, setNotesTab] = useState('notes');
   const [createRequest, setCreateRequest] = useState(0);
+  const [notesVersion, setNotesVersion] = useState(0);
 
   async function toggleFavorite() {
     if (saving || !paper) return;
@@ -44,11 +46,12 @@ export function PaperDetailPage({ id }: { id: number }) {
     <div className="detail-content-grid"><div className="reading-main">
       <section className="abstract-card"><div className="section-caption">ABSTRACT</div><h2>摘要</h2>
         <p className="note-content">{paper.abstract || '还没有摘要。添加几句话，为下一次阅读留下线索。'}</p></section>
+      <AIPanel paperId={id} onTagsChanged={setData} onNoteSaved={() => { setNotesVersion(value => value + 1); setNotesTab('notes'); }} />
       <section className="reading-notes" id="paper-notes"><div className="notes-title-row"><div><div className="section-caption">YOUR IDEAS</div><h2>我的阅读笔记</h2></div>
         <Space wrap><Button onClick={() => setNotesTab('attachments')}>上传笔记</Button>
           <Button type="primary" onClick={() => { setNotesTab('notes'); setCreateRequest(value => value + 1); }}>＋ 新建笔记</Button></Space></div>
         <Tabs activeKey={notesTab} onChange={setNotesTab} items={[
-          { key: 'notes', label: '在线笔记', children: <NotesPanel paperId={id} hideCreate createRequest={createRequest} onCreateHandled={() => setCreateRequest(0)} /> },
+          { key: 'notes', label: '在线笔记', children: <NotesPanel paperId={id} refreshVersion={notesVersion} hideCreate createRequest={createRequest} onCreateHandled={() => setCreateRequest(0)} /> },
           { key: 'attachments', label: `笔记附件${paper.note_attachments.length ? ` · ${paper.note_attachments.length}` : ''}`,
             children: <FilesPanel paperId={id} notes={paper.note_attachments} onChanged={reload} /> },
         ]} />

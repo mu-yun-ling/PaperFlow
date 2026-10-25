@@ -10,15 +10,21 @@ from pathlib import Path
 from pypdf import PdfReader
 
 
-def parse_pdf_safely(data):
+def parse_pdf_safely(data, *, full_text=False):
     """独立进程限时解析，异常 PDF 不长期阻塞请求或影响文件保存。"""
     try:
-        process = subprocess.run([sys.executable, '-m', 'app.services.pdf_metadata'], input=data,
+        command = [sys.executable, '-m', 'app.services.pdf_metadata']
+        if full_text:
+            command.append('--text')
+        process = subprocess.run(command, input=data,
                                  capture_output=True, timeout=12, check=True,
                                  cwd=Path(__file__).resolve().parents[2],
                                  creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         return json.loads(process.stdout)
     except (OSError, subprocess.SubprocessError, ValueError):
+        if full_text:
+            return {"text": "", "pages": [], "total_pages": 0, "truncated": False,
+                    "warning": "PDF 文本解析超时或失败。"}
         return result({"title": "", "authors": "", "year": None, "doi": "", "abstract": ""},
                       "PDF 解析超时或失败，请手动填写。原文件仍可保存。")
 
@@ -72,5 +78,36 @@ def result(fields, warning):
             "missing": [key for key in fields if key not in recognized], "warning": warning}
 
 
+def extract_paper_text(data):
+    """复用 pypdf：最多抽取 24 页、24000 字符，长文均匀选页并保留页码。"""
+    output = {"text": "", "pages": [], "total_pages": 0, "truncated": False, "warning": ""}
+    try:
+        reader = PdfReader(BytesIO(data), strict=False)
+        if reader.is_encrypted:
+            output["warning"] = "PDF 已加密，无法提取正文。"
+            return output
+        total = output["total_pages"] = len(reader.pages)
+        count = min(total, 24)
+        indexes = sorted({round(i * (total - 1) / (count - 1)) for i in range(count)}) if count > 1 else list(range(count))
+        output["truncated"] = total > count
+        budget = 24000 // max(count, 1)
+        parts = []
+        for index in indexes:
+            text = (reader.pages[index].extract_text() or "").strip()
+            if text:
+                label = f"[第 {index + 1} 页]\n"
+                available = budget - len(label) - 2
+                output["truncated"] |= len(text) > available
+                parts.append(label + text[:available])
+                output["pages"].append(index + 1)
+        output["text"] = "\n\n".join(parts)
+        if not output["text"]:
+            output["warning"] = "PDF 没有可提取的文字，扫描件暂不支持 OCR。"
+    except Exception:
+        output["warning"] = "PDF 文本解析失败。"
+    return output
+
+
 if __name__ == '__main__':
-    sys.stdout.buffer.write(json.dumps(extract_metadata(sys.stdin.buffer.read()), ensure_ascii=False).encode('utf-8'))
+    parser = extract_paper_text if '--text' in sys.argv else extract_metadata
+    sys.stdout.buffer.write(json.dumps(parser(sys.stdin.buffer.read()), ensure_ascii=False).encode('utf-8'))

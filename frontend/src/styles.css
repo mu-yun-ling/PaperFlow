@@ -337,3 +337,34 @@ body { background: radial-gradient(ellipse at 85% 0%, #dcebdc85, transparent 42%
   .notes-title-row .ant-space { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .library-card { transition: none; } }
+
+.ai-panel { margin-top: 28px; padding: 28px; border: 1px solid #dce5d4; border-radius: 20px; background: #f8faf3; min-width: 0; }
+.ai-panel h2 { margin: 0 0 14px; font-size: 22px; }
+.ai-panel > .section-description { line-height: 1.85; }
+.ai-actions { margin-top: 14px; margin-bottom: 12px; }
+.ai-result { border-color: #e3e9dc; background: #ffffffdd; }
+.ai-result .ant-card-body { padding: 22px; }
+.ai-source, .ai-footnote { font-size: 12px; color: #74836c; line-height: 1.8; overflow-wrap: anywhere; }
+.ai-source { margin-bottom: 12px; }
+.ai-result .ant-alert { margin-bottom: 18px; }
+.ai-result .ant-checkbox-group { display: flex; flex-wrap: wrap; gap: 12px 16px; }
+.ai-result-actions { margin-top: 20px; }
+.ai-footnote { border-top: 1px solid #e7ebdf; margin: 20px 0 0; padding-top: 12px; }
+.ai-empty { color: #86937d; padding: 12px 0; line-height: 1.9; }
+.ai-panel-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ai-settings-page { max-width: 900px; margin: 0 auto; }
+.ai-settings-card { background: #ffffffd9; border-color: #e3e9dc; border-radius: 20px; }
+.ai-settings-card .ant-card-body { padding: 32px; }
+.ai-settings-intro { display: flex; justify-content: space-between; gap: 28px; margin-bottom: 20px; }
+.ai-settings-intro h2 { margin-top: 0; }
+.ai-settings-intro p { color: #74836c; line-height: 1.8; }
+.ai-settings-intro > .ant-form-item { flex-shrink: 0; }
+.ai-key-label { margin-bottom: 12px; font-weight: 600; }
+.ai-settings-advanced { margin: 22px 0; padding: 18px; border: 1px solid #e3e9dc; border-radius: 12px; }
+.ai-settings-advanced summary { cursor: pointer; color: #52694c; }
+.ai-settings-advanced[open] summary { margin-bottom: 20px; }
+.ai-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.ai-settings-grid .ant-input-number { width: 100%; }
+.ai-settings-actions { margin-top: 22px; }
+@media (max-width: 760px) { .ai-settings-card .ant-card-body { padding: 20px; } .ai-settings-grid { grid-template-columns: 1fr; gap: 0; } }
+@media (max-width: 760px) { .ai-panel { padding: 20px; } .ai-result .ant-card-body { padding: 16px; } }

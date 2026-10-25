@@ -14,6 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <a href="#/papers" aria-current={['papers', 'new', 'edit', 'detail'].includes(route.page) ? 'page' : undefined}>文献库</a>
         <a href="#/tags" aria-current={route.page === 'tags' ? 'page' : undefined}>标签管理</a>
         <a href="#/dashboard" aria-current={route.page === 'dashboard' ? 'page' : undefined}>阅读概览</a>
+        <a href="#/settings/ai" aria-current={route.page === 'ai-settings' ? 'page' : undefined}>AI 设置</a>
       </nav>
       </header>
       <main>{children}</main>

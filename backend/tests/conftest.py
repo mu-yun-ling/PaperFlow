@@ -7,7 +7,7 @@ from app.extensions import db
 @pytest.fixture()
 def app(tmp_path):
     application = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///" + (tmp_path / "test.db").as_posix(),
-                              "UPLOAD_FOLDER": str(tmp_path / "uploads")})
+                              "UPLOAD_FOLDER": str(tmp_path / "uploads"), "AI_SETTINGS_PATH": str(tmp_path / "ai-settings.json")})
     with application.app_context():
         db.create_all()
     yield application

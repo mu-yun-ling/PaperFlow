@@ -18,12 +18,24 @@ def create_app(test_config=None):
         MAX_CONTENT_LENGTH=26 * 1024 * 1024,
         MAX_FILE_SIZE=25 * 1024 * 1024,
         UPLOAD_FOLDER=str(Path(app.instance_path) / "uploads"),
+        AI_ENABLED=os.getenv("AI_ENABLED", "false"),
+        AI_SETTINGS_PATH=str(Path(app.instance_path) / "ai-settings.json"),
+        AI_API_KEY=os.getenv("AI_API_KEY", ""),
+        AI_BASE_URL=os.getenv("AI_BASE_URL", "https://api.openai.com/v1"),
+        AI_MODEL=os.getenv("AI_MODEL", ""),
+        AI_TIMEOUT_SECONDS=os.getenv("AI_TIMEOUT_SECONDS", "45"),
+        AI_MAX_OUTPUT_TOKENS=os.getenv("AI_MAX_OUTPUT_TOKENS", "3000"),
+        AI_TOKEN_PARAMETER=os.getenv("AI_TOKEN_PARAMETER", "max_completion_tokens"),
     )
     if test_config:
         app.config.update(test_config)
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     app.json.ensure_ascii = False
     db.init_app(app)
+    from .services.ai_service import AIService
+    from .services.ai_settings import AISettingsStore
+    app.extensions["ai_settings"] = AISettingsStore(app.config)
+    app.extensions["ai_service"] = AIService(app.config, app.extensions["ai_settings"])
 
     from . import models  # 注册模型后，初始化命令才能创建完整表结构。
     from .routes import api

@@ -229,10 +229,6 @@ def test_init_command_and_persistence(tmp_path):
         db.engine.dispose()
 
 
-def test_ai_placeholder(monkeypatch):
-    monkeypatch.setenv("AI_API_KEY", "test-only")
-    service = AIService()
-    for method, args in ((service.summarize_paper, ({},)), (service.extract_keywords, ({},)),
-                         (service.summarize_reading, ({}, []))):
-        with pytest.raises(NotImplementedError):
-            method(*args)
+def test_ai_disabled_by_default():
+    service = AIService({})
+    assert service.status()["available"] is False

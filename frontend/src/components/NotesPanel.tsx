@@ -8,11 +8,11 @@ import { LoadError } from './LoadError';
 import { NoteEditor } from './NoteEditor';
 import { MarkdownView } from './MarkdownView';
 
-export function NotesPanel({ paperId, compact = false, createRequest = 0, onCreateHandled, hideCreate = false }: {
-  paperId: number; compact?: boolean; createRequest?: number; onCreateHandled?: () => void; hideCreate?: boolean;
+export function NotesPanel({ paperId, compact = false, createRequest = 0, onCreateHandled, hideCreate = false, refreshVersion = 0 }: {
+  paperId: number; compact?: boolean; createRequest?: number; onCreateHandled?: () => void; hideCreate?: boolean; refreshVersion?: number;
 }) {
   const { message, modal } = App.useApp();
-  const load = useCallback((signal: AbortSignal) => api.notes.list(paperId, signal), [paperId]);
+  const load = useCallback((signal: AbortSignal) => api.notes.list(paperId, signal), [paperId, refreshVersion]);
   const { data, error, loading, reload } = useResource(load);
   const [editor, setEditor] = useState<{ note: Note | null } | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);

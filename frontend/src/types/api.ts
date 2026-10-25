@@ -30,6 +30,21 @@ export interface Dashboard {
 
 export interface ApiResponse<T> { data: T }
 
+export type AIAction = 'analysis' | 'keywords' | 'reading-summary';
+export interface AIStatus { available: boolean; message: string }
+export interface AISettingsInput {
+  enabled: boolean; base_url: string; model: string; api_key?: string; clear_api_key?: boolean;
+  timeout_seconds: number; max_output_tokens: number; token_parameter: 'max_tokens' | 'max_completion_tokens';
+}
+export interface AISettings extends Omit<AISettingsInput, 'api_key' | 'clear_api_key'> {
+  has_api_key: boolean; source: 'saved' | 'environment';
+}
+export interface AIResult {
+  markdown?: string;
+  keywords?: string[];
+  source: { kind: 'pdf' | 'abstract'; pages: number[]; total_pages: number; text_chars: number; notes_used: number; warnings: string[] };
+}
+
 export interface PaperTag {
   id: number;
   name: string;

@@ -7,6 +7,7 @@ const PaperFormPage = lazy(() => import('./PaperFormPage').then((module) => ({ d
 const PaperDetailPage = lazy(() => import('./PaperDetailPage').then((module) => ({ default: module.PaperDetailPage })));
 const TagsPage = lazy(() => import('./TagsPage').then((module) => ({ default: module.TagsPage })));
 const OverviewPage = lazy(() => import('./OverviewPage').then((module) => ({ default: module.OverviewPage })));
+const AISettingsPage = lazy(() => import('./AISettingsPage').then((module) => ({ default: module.AISettingsPage })));
 
 export function PageRouter() {
   return <Suspense fallback={<div className="page-loading"><Skeleton active /></div>}><CurrentPage /></Suspense>;
@@ -23,6 +24,7 @@ function CurrentPage() {
     case 'detail': return <PaperDetailPage key={route.id} id={route.id} />;
     case 'tags': return <TagsPage />;
     case 'dashboard': return <OverviewPage />;
+    case 'ai-settings': return <AISettingsPage />;
     default: return <Result status="404" title="页面不存在" extra={<Button href="#/papers">返回文献列表</Button>} />;
   }
 }

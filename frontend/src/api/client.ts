@@ -1,4 +1,4 @@
-import type { ApiResponse, Attachment, ReadingProgress, PdfExtraction, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, PaperFilters, TagSummary, PaperTag } from '../types/api';
+import type { AISettings, AISettingsInput, AIAction, AIResult, AIStatus, ApiResponse, Attachment, ReadingProgress, PdfExtraction, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, PaperFilters, TagSummary, PaperTag } from '../types/api';
 
 export class ApiError extends Error {
   status: number;
@@ -27,15 +27,15 @@ export function paperListParams(page: number, filters: PaperFilters = {}): strin
   return params.toString();
 }
 
-async function request<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal; binary?: boolean } = {}): Promise<T> {
+async function request<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal; binary?: boolean; timeoutMs?: number; settingsWrite?: boolean } = {}): Promise<T> {
   const multipart = options.body instanceof FormData;
-  const timeout = AbortSignal.timeout(multipart || options.binary ? 60000 : 15000);
+  const timeout = AbortSignal.timeout(options.timeoutMs ?? (multipart || options.binary ? 60000 : 15000));
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   try {
     const response = await fetch(`/api${path}`, {
       method: options.method ?? 'GET',
       signal,
-      headers: options.body === undefined || multipart ? undefined : { 'Content-Type': 'application/json' },
+      headers: options.body === undefined || multipart ? undefined : { 'Content-Type': 'application/json', ...(options.settingsWrite ? { 'X-PaperFlow-Settings': '1' } : {}) },
       body: multipart ? options.body as FormData : options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     if (response.status === 204) return undefined as T;
@@ -70,6 +70,16 @@ function fileBody(file: File): FormData {
 }
 
 export const api = {
+  ai: {
+    settings: (signal?: AbortSignal) => request<AISettings>('/ai/settings', { signal }),
+    saveSettings: (body: AISettingsInput) => request<AISettings>('/ai/settings', { method: 'PUT', body, settingsWrite: true }),
+    testSettings: (body: AISettingsInput) => request<{ message: string }>('/ai/settings/test', { method: 'POST', body, settingsWrite: true, timeoutMs: 90000 }),
+    status: (signal?: AbortSignal) => request<AIStatus>('/ai/status', { signal }),
+    generate: (paperId: number, action: AIAction, signal?: AbortSignal) =>
+      request<AIResult>(`/papers/${paperId}/ai/${action}`, { method: 'POST', signal, timeoutMs: 90000 }),
+    applyKeywords: (paperId: number, keywords: string[]) =>
+      request<PaperDetail>(`/papers/${paperId}/ai/keywords/apply`, { method: 'POST', body: { keywords } }),
+  },
   health: (signal?: AbortSignal) => request<Health>('/health', { signal }),
   dashboard: (signal?: AbortSignal) => request<Dashboard>('/dashboard', { signal }),
   papers: {
