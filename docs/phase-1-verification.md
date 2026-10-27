@@ -1,7 +1,5 @@
 # 第一阶段验收记录
 
-验收日期：2026-10-21（Asia/Shanghai）。
-
 ## 实现范围
 
 已完成四张表、Flask 应用工厂、models/routes/services 分层、全部基础 REST API、统一校验和错误处理、AIService 占位、前端应用壳、启动脚本和设计文档。尚未进入文献/标签/笔记操作界面及 ECharts 图表阶段。

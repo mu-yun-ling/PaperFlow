@@ -1,6 +1,6 @@
 # 第五阶段验收记录
 
-验收日期：2026-10-23（Asia/Shanghai）。依据 `prompt/第五阶段.txt` 完成 Dashboard 和统计可视化，本阶段结束后停止开发。
+依据 `prompt/第五阶段.txt` 完成 Dashboard 和统计可视化，本阶段结束后停止开发。
 
 ## 完成内容
 
