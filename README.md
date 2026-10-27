@@ -122,4 +122,4 @@ npm.cmd run build
 | 第六阶段 | 附件、PDF 阅读、Markdown 与阅读进度 | [文件与阅读体验验收](docs/phase-6-verification.md) |
 | 第七阶段 | AI 分析、关键词、总结与服务配置 | [AI 功能验收](docs/phase-7-verification.md) |
 | 第八阶段 | 连续阅读、摘录联动、书签与 PDF 标记 | [阅读工作台验收](docs/phase-8-verification.md) |
-| 最终阶段 | 笔记与批注交互完善、界面打磨及文档整理 | [最终验收](docs/phase-9-verification.md) · [修改方案](docs/ui-ux-improvement-plan-2026-10-27.md) |
+| 最终阶段 | 笔记与批注交互完善、界面打磨及文档整理 | [最终验收](docs/phase-9-verification.md) |

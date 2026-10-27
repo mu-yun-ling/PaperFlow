@@ -14,4 +14,3 @@
 | [第七阶段](phase-7-verification.md) | AI 辅助与服务配置 |
 | [第八阶段](phase-8-verification.md) | 阅读工作台、连续阅读、书签和 PDF 标记 |
 | [最终阶段](phase-9-verification.md) | 笔记与批注交互完善、界面打磨及文档收敛 |
-| [最终阶段修改方案](ui-ux-improvement-plan-2026-10-27.md) | 问题排查、目标交互与验收清单 |
