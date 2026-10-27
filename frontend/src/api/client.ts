@@ -1,5 +1,7 @@
 import type { AISettings, AISettingsInput, AIAction, AIResult, AIStatus, ApiResponse, Attachment, ReadingProgress, PdfExtraction, Dashboard, Health, Note, Page, Paper, PaperDetail, PaperInput, PaperFilters, TagSummary, PaperTag } from '../types/api';
 
+import type { AnnotationInput, PdfAnnotation } from '../types/annotations';
+
 export class ApiError extends Error {
   status: number;
   code: string;
@@ -71,6 +73,7 @@ function fileBody(file: File): FormData {
 
 export const api = {
   ai: {
+    explain: (paperId: number, fileId: number, page: number, text: string, signal?: AbortSignal) => request<{ markdown: string }>(`/papers/${paperId}/ai/explain`, { method: 'POST', body: { file_id: fileId, page, text }, signal, timeoutMs: 90000 }),
     settings: (signal?: AbortSignal) => request<AISettings>('/ai/settings', { signal }),
     saveSettings: (body: AISettingsInput) => request<AISettings>('/ai/settings', { method: 'PUT', body, settingsWrite: true }),
     testSettings: (body: AISettingsInput) => request<{ message: string }>('/ai/settings/test', { method: 'POST', body, settingsWrite: true, timeoutMs: 90000 }),
@@ -91,6 +94,10 @@ export const api = {
     delete: (id: number) => request<void>(`/papers/${id}`, { method: 'DELETE' }),
   },
   files: {
+    annotations: (id: number, signal?: AbortSignal) => request<PdfAnnotation[]>(`/files/${id}/annotations`, { signal }),
+    createAnnotation: (id: number, body: AnnotationInput) => request<PdfAnnotation>(`/files/${id}/annotations`, { method: 'POST', body }),
+    updateAnnotation: (id: number, annotationId: number, body: AnnotationInput) => request<PdfAnnotation>(`/files/${id}/annotations/${annotationId}`, { method: 'PUT', body }),
+    deleteAnnotation: (id: number, annotationId: number) => request<void>(`/files/${id}/annotations/${annotationId}`, { method: 'DELETE' }),
     progress: (id: number, body: { total_pages: number; current_page: number; read: boolean }) =>
       request<ReadingProgress>(`/files/${id}/reading-progress`, { method: 'PUT', body }),
     parse: (file: File, signal?: AbortSignal) => request<PdfExtraction>('/papers/parse-pdf', { method: 'POST', body: fileBody(file), signal }),

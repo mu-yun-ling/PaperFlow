@@ -1,7 +1,8 @@
 from sqlalchemy import func, select
 
 from ..extensions import db
-from ..models import Paper, Tag, paper_tags
+from ..models import Paper, Tag, Attachment, ReadingProgress, paper_tags
+from ..serializers import paper_dict
 from .validation import STATUSES
 
 
@@ -24,4 +25,9 @@ def dashboard_data():
         "by_status": statuses,
         "by_year": [{"year": year, "count": count} for year, count in years],
         "by_tag": [{"id": tag_id, "name": name, "count": count} for tag_id, name, count in tags],
+        "recent_papers": [paper_dict(paper) for paper in db.session.scalars(
+            select(Paper).join(Attachment, Attachment.paper_id == Paper.id)
+            .join(ReadingProgress, ReadingProgress.attachment_id == Attachment.id)
+            .where(Attachment.kind == "paper", ReadingProgress.last_read_at.is_not(None))
+            .order_by(ReadingProgress.last_read_at.desc(), Paper.id.desc()).limit(4))],
     }

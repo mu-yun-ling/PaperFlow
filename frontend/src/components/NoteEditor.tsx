@@ -4,8 +4,8 @@ import { errorMessage } from '../api/client';
 import type { Note } from '../types/api';
 import { MarkdownView } from './MarkdownView';
 
-export function NoteEditor({ note, onSave, onClose }: {
-  note: Note | null; onSave: (content: string) => Promise<void>; onClose: () => void;
+export function NoteEditor({ note, onSave, onClose, onSavingChange }: {
+  note: Note | null; onSave: (content: string) => Promise<void>; onClose: () => void; onSavingChange?: (saving: boolean) => void;
 }) {
   const [form] = Form.useForm<{ content: string }>();
   const [saving, setSaving] = useState(false);
@@ -16,10 +16,11 @@ export function NoteEditor({ note, onSave, onClose }: {
   async function submit(values: { content: string }) {
     if (saving) return;
     setSaving(true);
+    onSavingChange?.(true);
     setError('');
     try { await onSave(values.content.trim()); onClose(); }
     catch (reason) { setError(errorMessage(reason)); }
-    finally { setSaving(false); }
+    finally { setSaving(false); onSavingChange?.(false); }
   }
 
   return <Modal open title={note ? '编辑笔记' : '新建笔记'} okText="保存笔记" cancelText="取消" width={960}

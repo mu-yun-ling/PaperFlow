@@ -7,10 +7,11 @@ import { PreviewErrorBoundary } from './components/PreviewErrorBoundary';
 export default function App() {
   return (
     <ConfigProvider locale={zhCN} theme={{ token: {
-      colorPrimary: '#2f6b57', borderRadius: 8, colorText: '#26352f',
-      colorBorder: '#dfe5df', colorBgLayout: '#f7f8f5', controlHeight: 36,
+      colorPrimary: '#355f4c', borderRadius: 6, colorText: '#2c4035',
+      colorSuccess: '#779f7c', colorInfo: '#779bab', colorWarning: '#cda65e',
+      colorBorder: '#e3e9dd', colorBgLayout: '#f5f6f0', controlHeight: 34,
       fontFamily: 'Inter, "Segoe UI", "Microsoft YaHei", sans-serif',
-    } }}>
+    }, components: { Progress: { defaultColor: '#527c62', remainingColor: '#e6ebe2' } } }}>
       <AntApp><AppShell><PreviewErrorBoundary><PageRouter /></PreviewErrorBoundary></AppShell></AntApp>
     </ConfigProvider>
   );

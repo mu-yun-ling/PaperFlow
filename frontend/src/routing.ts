@@ -8,7 +8,7 @@ export function parseRoute(hash: string): Route {
   if (path === '/papers' || path === '/') return { page: 'papers' };
   if (path === '/papers/new') return { page: 'new' };
   if (path === '/tags') return { page: 'tags' };
-  if (path === '/dashboard') return { page: 'dashboard' };
+  if (path === '/dashboard' || path === '/dashboard#statistics') return { page: 'dashboard' };
   if (path === '/settings/ai') return { page: 'ai-settings' };
   const match = /^\/papers\/([1-9]\d*)(\/edit)?$/.exec(path);
   if (match && Number.isSafeInteger(Number(match[1]))) {

@@ -1,4 +1,6 @@
 """将业务数据转换为有界的 AI 输入；不改变论文或笔记。"""
+import re
+
 from ..errors import APIError
 from .files import storage_path
 from .pdf_metadata import parse_pdf_safely
@@ -35,9 +37,12 @@ def build_context(paper, include_notes=False):
         # 最新 20 条在线笔记共享 8000 字符；每条都有机会进入输入。
         notes = paper.notes[:20]
         per_note = 8000 // max(1, len(notes))
-        context["user_notes"] = [{"id": note.id, "content": note.content[:per_note]} for note in notes]
+        # Reading cards keep versioned metadata in Markdown comments. Exclude
+        # these duplicated fields/coordinates from the model's text budget.
+        note_texts = [re.sub(r'^(?:<!-- paperflow-(?:source|reading):\{[^\n]*\} -->\r?\n)+', '', note.content) for note in notes]
+        context["user_notes"] = [{"id": note.id, "content": text[:per_note]} for note, text in zip(notes, note_texts)]
         notes_used = len(notes)
-        if len(paper.notes) > 20 or any(len(note.content) > per_note for note in notes):
+        if len(paper.notes) > 20 or any(len(text) > per_note for text in note_texts):
             warnings.append("在线笔记已截取：最多使用最新 20 条，共 8000 字符。")
         if not notes:
             warnings.append("尚无在线阅读笔记，本次总结无法体现个人阅读关注点。")

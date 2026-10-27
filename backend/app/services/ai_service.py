@@ -127,3 +127,6 @@ class AIService:
 
     def summarize_reading(self, context):
         return {"markdown": self._complete("输出 Markdown 阅读总结，以‘# 我的阅读总结’开头，包含论文理解、我的关注点、仍有疑问、下一步阅读。重点回应用户笔记，明确区分用户已有观点和建议；没有笔记时注明尚无个人笔记，不虚构个人想法。", context)}
+
+    def explain_excerpt(self, context):
+        return {"markdown": self._complete("解释用户选中的论文片段。按‘这段在说什么’、‘关键概念’、‘阅读提示’组织简短 Markdown，不推断未提供的上下文；页码只是用户提供的位置，不表示已读取该页全文。", context)}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Empty, Pagination, Progress, Skeleton, Space, Tag } from 'antd';
+import { App, Button, Empty, Pagination, Progress, Segmented, Skeleton, Space, Tag } from 'antd';
 import { api } from '../api/client';
 import { useResource } from '../hooks/useResource';
 import { PaperActions } from '../components/PaperActions';
@@ -9,8 +9,13 @@ import { PaperFilterBar } from '../components/PaperFilterBar';
 import { defaultFilters, hasFilters, normalizeFilters, yearError } from '../utils/paperFilters';
 import type { FilterValues } from '../utils/paperFilters';
 import { formatTime } from '../utils/papers';
+import { Icon } from '../components/Icon';
+import { errorMessage } from '../api/client';
 
 export function PaperListPage() {
+  const { message } = App.useApp();
+  const [view, setView] = useState(() => { try { return localStorage.getItem('paperflow.library.view') === 'compact' ? 'compact' : 'cards'; } catch { return 'cards'; } });
+  const [favoriting, setFavoriting] = useState<number | null>(null);
   const [draft, setDraft] = useState<FilterValues>(defaultFilters);
   const [query, setQuery] = useState({ page: 1, filters: normalizeFilters(defaultFilters) });
   const { page, filters } = query;
@@ -47,22 +52,22 @@ export function PaperListPage() {
   }
 
   return <>
-    <div className="page-heading library-heading"><div><span className="section-caption">A SPACE FOR YOUR CURIOSITY</span><h1>让知识，在这里生长。</h1><p>你的文献库。每一篇阅读，都连接一个新的想法。</p></div>
-      <Space><Button type="text" onClick={reload} loading={loading}>刷新</Button><Button type="primary" size="large" href="#/papers/new">＋ 收录文献</Button></Space>
+    <div className="page-heading library-heading"><div><span className="section-caption">YOUR LIBRARY</span><h1>文献库<span className="heading-dot">.</span></h1><p>收藏值得读的论文，连接正在生长的想法。</p></div>
+      <Space><Button type="text" onClick={reload} loading={loading}>刷新</Button><Button type="primary" icon={<Icon name="plus" size={16} />} href="#/papers/new">新增文献</Button></Space>
     </div>
     <PaperFilterBar values={draft} onChange={setDraft} onClear={clearFilters} invalidYear={invalidYear} />
-    <p className="query-summary" role="status">{invalidYear ? '年份条件无效，列表保留上次有效查询结果。'
+    <div className="library-results-toolbar"><p className="query-summary" role="status">{invalidYear ? '年份条件无效，列表保留上次有效查询结果。'
       : pending || loading ? '正在查询文献…' : error ? '查询失败，请重试。'
-      : `${hasFilters(filters) ? '筛选结果' : '全部文献'}：共 ${data?.total ?? 0} 篇`}</p>
+      : `${hasFilters(filters) ? '筛选结果' : '全部文献'} · ${data?.total ?? 0} 篇`}</p><Segmented aria-label="文献显示方式" value={view} onChange={value => { setView(value); try { localStorage.setItem('paperflow.library.view', value); } catch { /* 无存储时仍可切换。 */ } }} options={[{ value: 'cards', label: <span title="卡片视图"><Icon name="grid" size={15} /><span className="sr-only">卡片视图</span></span> }, { value: 'compact', label: <span title="紧凑视图"><Icon name="list" size={15} /><span className="sr-only">紧凑视图</span></span> }]} /></div>
     {error ? <LoadError error={error} retry={reload} /> : loading && !data ? <Skeleton active paragraph={{ rows: 8 }} /> :
-      data?.items.length ? <div className={`library-grid ${loading || pending ? 'is-updating' : ''}`} aria-busy={loading || pending}>
+      data?.items.length ? <div className={`library-grid view-${view} ${loading || pending ? 'is-updating' : ''}`} aria-busy={loading || pending}>
         {data.items.map(paper => <article className="library-card" key={paper.id}>
-          <div className="library-card-top"><span className="paper-year">{paper.year || '待探索'}{paper.is_favorite && ' · ★ 收藏'}</span>
-            <PaperActions id={paper.id} onDeleted={afterDelete} disabled={loading || pending} /></div>
+          <div className="library-card-top"><span className="paper-year">{paper.year || '年份待补充'}</span><Space size={0}><Button type="text" size="small" aria-label={paper.is_favorite ? '取消收藏' : '收藏文献'} aria-pressed={paper.is_favorite} className={paper.is_favorite ? 'favorite-active' : 'favorite-button'} disabled={favoriting !== null || loading || pending} onClick={async () => { setFavoriting(paper.id); try { await api.papers.update(paper.id, { is_favorite: !paper.is_favorite }); reload(); } catch (reason) { message.error(errorMessage(reason)); } finally { setFavoriting(null); } }} icon={<Icon name="star" size={16} />} />
+            <PaperActions id={paper.id} onDeleted={afterDelete} disabled={loading || pending} /></Space></div>
           <h2><a href={`#/papers/${paper.id}`}>{paper.title}</a></h2><p className="library-authors">{paper.authors || '作者未填写'}</p>
-          <p className="library-abstract">{paper.abstract || '从标题出发，开始这篇论文的探索。'}</p>
           <div className="library-tags"><Space size={[4, 4]} wrap>{paper.tags.map(tag => <Tag key={tag.id}>{tag.name}</Tag>)}</Space></div>
-          <div className="library-progress"><ReadingStatusTag status={paper.reading_status} />{paper.reading_progress && <Progress percent={paper.reading_progress.percent} format={value => `${value}%`} size="small" />}</div>
+          <p className="library-abstract">{paper.abstract || '从标题出发，开始这篇论文的探索。'}</p>
+          <div className="library-progress"><ReadingStatusTag status={paper.reading_status} /><Progress percent={paper.reading_progress?.percent ?? 0} strokeColor={paper.reading_status === 'completed' ? '#729c7b' : '#315f4d'} format={value => `${value}%`} size="small" /></div>
           <div className="library-card-footer"><span>{paper.reading_progress?.last_read_at ? `最近阅读 ${formatTime(paper.reading_progress.last_read_at)}` : '等待下一次灵感'}</span><a href={`#/papers/${paper.id}`}>打开文献 ↗</a></div>
         </article>)}
       </div> : <div className="library-empty"><Empty description={hasFilters(filters) ? '没有找到符合条件的文献，试试调整或清空筛选。' : '还没有文献，添加第一篇开始阅读吧。'} /></div>}

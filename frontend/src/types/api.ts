@@ -18,6 +18,7 @@ export interface PaperFilters {
 }
 
 export interface Dashboard {
+  recent_papers?: Paper[];
   total: number;
   not_started: number;
   reading: number;

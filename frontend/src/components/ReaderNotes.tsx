@@ -4,7 +4,7 @@ import { api, errorMessage } from '../api/client';
 import { useResource } from '../hooks/useResource';
 import type { Attachment } from '../types/api';
 import { MarkdownPreview } from './MarkdownPreview';
-import { NotesPanel } from './NotesPanel';
+import { NotesPanel, type NotesPanelProps } from './NotesPanel';
 import { PreviewErrorBoundary } from './PreviewErrorBoundary';
 
 const PdfReader = lazy(() => import('./PdfReader'));
@@ -45,13 +45,13 @@ function UploadedNotes({ files }: { files: Attachment[] }) {
   </section>;
 }
 
-export function ReaderNotes({ paperId }: { paperId: number }) {
+export function ReaderNotes({ paperId, tab, onTabChange, ...noteProps }: NotesPanelProps & { tab: string; onTabChange: (tab: string) => void }) {
   const resource = useResource(useCallback((signal: AbortSignal) => api.papers.get(paperId, signal), [paperId]));
   if (resource.loading) return <div className="pdf-loading" role="status"><Spin /> 正在读取笔记…</div>;
   if (resource.error) return <Alert type="error" title={errorMessage(resource.error)} action={<Button onClick={resource.reload}>重试加载</Button>} />;
   const files = resource.data?.note_attachments ?? [];
-  return <Tabs defaultActiveKey={files.length ? 'uploaded' : 'online'} items={[
-    { key: 'uploaded', label: `上传笔记（${files.length}）`, children: <UploadedNotes files={files} /> },
-    { key: 'online', label: '在线笔记', children: <NotesPanel paperId={paperId} compact /> },
+  return <Tabs activeKey={tab} onChange={onTabChange} items={[
+    { key: 'uploaded', label: '文档对照', children: <UploadedNotes files={files} /> },
+    { key: 'online', label: '我的笔记', children: <NotesPanel paperId={paperId} compact {...noteProps} /> },
   ]} />;
 }

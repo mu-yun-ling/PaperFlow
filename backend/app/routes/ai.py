@@ -5,7 +5,7 @@ from urllib.parse import urlsplit
 from . import api
 from ..errors import APIError
 from ..extensions import db
-from ..models import Paper, Tag, utc_now
+from ..models import Paper, Tag, Attachment, utc_now
 from ..serializers import paper_dict
 from ..services.ai_context import build_context
 from ..services.papers import get_resource
@@ -67,6 +67,26 @@ def ai_generate(paper_id, action):
     db.session.rollback()
     result = getattr(service, methods[action])(context)
     return jsonify(data={**result, "source": source})
+
+
+@api.post("/papers/<int:paper_id>/ai/explain")
+def ai_explain(paper_id):
+    paper = get_resource(Paper, paper_id, "文献")
+    body = json_body({"file_id", "page", "text"})
+    file_id, page = body.get("file_id"), body.get("page")
+    if type(file_id) is not int or not 1 <= file_id <= 2**63 - 1 or type(page) is not int or not 1 <= page <= 100000:
+        raise APIError("请选择有效的 PDF 片段与页码")
+    file = get_resource(Attachment, file_id, "附件")
+    if file.paper_id != paper.id or file.kind != "paper":
+        raise APIError("所选片段不属于这篇文献的原文")
+    text = text_field(body.get("text"), "所选片段", 8000, required=True)
+    if file.reading_progress and page > file.reading_progress.total_pages:
+        raise APIError("页码超出 PDF 范围")
+    context = {"title": paper.title, "selected_text": text, "page": page}
+    service = current_app.extensions["ai_service"]
+    service.settings()
+    db.session.rollback()
+    return jsonify(data=service.explain_excerpt(context))
 
 
 @api.post("/papers/<int:paper_id>/ai/keywords/apply")

@@ -11,14 +11,23 @@ const PdfReader = lazy(() => import('./PdfReader'));
 
 function fileSize(size: number) { return size < 1024 * 1024 ? `${Math.max(1, Math.round(size / 1024))} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`; }
 
-export function FilesPanel({ paperId, paperFile, notes, onChanged }: {
+export function FilesPanel({ paperId, paperFile, notes, onChanged, openRequest, onOpenHandled }: {
   paperId: number; paperFile?: Attachment | null; notes?: Attachment[]; onChanged: () => void;
+  openRequest?: { page: number; token: number }; onOpenHandled?: () => void;
 }) {
   const isNotes = notes !== undefined;
   const { message, modal } = App.useApp();
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
-  const [preview, setPreview] = useState<{ file: Attachment; blob?: Blob; text?: string }>();
+  const [preview, setPreview] = useState<{ file: Attachment; blob?: Blob; text?: string; initialPage?: number }>();
+  const lastOpen = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (openRequest && paperFile && lastOpen.current !== openRequest.token && !busy) {
+      lastOpen.current = openRequest.token;
+      void open(paperFile, false, openRequest.page);
+      onOpenHandled?.();
+    }
+  }, [openRequest, paperFile, busy]);
   const urls = useRef(new Set<string>());
   useEffect(() => () => { for (const url of urls.current) URL.revokeObjectURL(url); }, []);
 
@@ -35,7 +44,7 @@ export function FilesPanel({ paperId, paperFile, notes, onChanged }: {
     if (!isNotes) onChanged();
   }
 
-  async function open(file: Attachment, download: boolean) {
+  async function open(file: Attachment, download: boolean, initialPage?: number) {
     await perform(async () => {
       const blob = await api.files.read(file.id);
       const docx = file.filename.toLowerCase().endsWith('.docx');
@@ -48,7 +57,7 @@ export function FilesPanel({ paperId, paperFile, notes, onChanged }: {
         document.body.appendChild(link); link.click(); link.remove();
         message.success(docx && !download ? '已交给浏览器下载，请用 Word 或兼容阅读器打开。' : '已交给浏览器下载');
         window.setTimeout(() => { URL.revokeObjectURL(url); urls.current.delete(url); }, 60000);
-      } else setPreview({ file, blob });
+      } else setPreview({ file, blob, initialPage });
     });
   }
 
@@ -89,7 +98,7 @@ export function FilesPanel({ paperId, paperFile, notes, onChanged }: {
         {!isNotes && <Button href={`#/papers/${paperId}/edit`}>添加 PDF</Button>}</div>}
       {isNotes && <p className="attachment-help">PDF / DOCX / MD / TXT · 每个文件 ≤ 25 MB · DOCX 使用本地阅读器打开</p>}
     </Card>
-    {!isNotes && preview?.blob ? <ReadingWorkspace file={preview.file} blob={preview.blob} onClose={closePreview} onDownload={() => void open(preview.file, true)} /> :
+    {!isNotes && preview?.blob ? <ReadingWorkspace file={preview.file} blob={preview.blob} initialPage={preview.initialPage} onClose={closePreview} onDownload={() => void open(preview.file, true)} /> :
     <Modal open={!!preview} title={preview?.file.filename} onCancel={closePreview} footer={<Space><Button disabled={busy} onClick={() => preview && open(preview.file, true)}>下载文件</Button><Button onClick={closePreview}>关闭</Button></Space>} width={1000} destroyOnHidden>
       {preview?.blob ? <PreviewErrorBoundary><Suspense fallback={<div className="pdf-loading" role="status"><Spin /> 正在加载阅读器…</div>}><PdfReader blob={preview.blob} /></Suspense></PreviewErrorBoundary>
         : preview?.file.filename.toLowerCase().endsWith('.md') ? <MarkdownPreview content={preview.text ?? ''} /> : <pre className="text-preview">{preview?.text}</pre>}

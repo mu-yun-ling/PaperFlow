@@ -97,3 +97,15 @@ class ReadingProgress(db.Model):
     current_page = db.Column(db.Integer, nullable=False, default=1)
     max_page = db.Column(db.Integer, nullable=False, default=0)
     last_read_at = db.Column(db.DateTime)
+
+
+class PdfAnnotation(db.Model):
+    __tablename__ = "pdf_annotations"
+    id = db.Column(db.Integer, primary_key=True)
+    attachment_id = db.Column(db.Integer, db.ForeignKey("attachments.id", ondelete="CASCADE"), nullable=False, index=True)
+    page = db.Column(db.Integer, nullable=False)
+    kind = db.Column(db.String(16), nullable=False)
+    color = db.Column(db.String(7), nullable=False)
+    geometry = db.Column(db.JSON, nullable=False)
+    text = db.Column(db.Text, nullable=False, default="")
+    created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
