@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, Form, Input, Select } from 'antd';
+import { Alert, Button, Checkbox, Form, Input, Select, Tag } from 'antd';
 import { api, errorMessage } from '../api/client';
 import { useResource } from '../hooks/useResource';
 import type { FilterValues } from '../utils/paperFilters';
@@ -27,6 +27,7 @@ export function PaperFilterBar({ values, onChange, onClear, invalidYear }: {
         <Select aria-label="排序字段" value={values.sort_by} onChange={sort_by => change({ sort_by })} options={[{ label: '收录时间', value: 'created_at' }, { label: '最近更新', value: 'updated_at' }, { label: '出版年份', value: 'year' }]} />
         <Select aria-label="排序方向" value={values.sort_order} onChange={sort_order => change({ sort_order })} options={[{ label: '从新到旧', value: 'desc' }, { label: '从旧到新', value: 'asc' }]} />
       </div>
+      <div className="filter-extra-row"><Checkbox checked={values.is_favorite === true} onChange={event => change({ is_favorite: event.target.checked ? true : undefined })}>只看收藏</Checkbox>{values.title && <Tag closable onClose={() => change({ title: '' })}>标题：{values.title}</Tag>}{values.author && <Tag closable onClose={() => change({ author: '' })}>作者：{values.author}</Tag>}{values.tag_id && <Tag closable onClose={() => change({ tag_id: undefined })}>{tags.data?.find(tag => tag.id === values.tag_id)?.name || '已选标签'}</Tag>}{values.year && <Tag closable onClose={() => change({ year: '' })}>{values.year} 年</Tag>}{values.reading_status && <Tag closable onClose={() => change({ reading_status: undefined })}>{readingOptions.find(item => item.value === values.reading_status)?.label}</Tag>}{values.research_topic && <Tag closable onClose={() => change({ research_topic: '' })}>{values.research_topic}</Tag>}</div>
       <div className="paper-filter-grid filter-secondary" hidden={!expanded}>
         <Form.Item label="作者搜索" htmlFor="filter-author"><Input id="filter-author" allowClear maxLength={1000} placeholder="输入作者姓名" value={values.author ?? ''} onChange={event => change({ author: event.target.value })} /></Form.Item>
         <Form.Item label="研究主题筛选" htmlFor="filter-topic"><Input id="filter-topic" allowClear maxLength={200} placeholder="输入完整主题（精确匹配）" value={values.research_topic ?? ''} onChange={event => change({ research_topic: event.target.value })} /></Form.Item>

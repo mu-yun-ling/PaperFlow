@@ -49,6 +49,14 @@ def validate(body, item):
         if not all(valid_number(geometry.get(k)) for k in ("x", "y")):
             raise APIError("文字坐标无效")
         geometry = {"x": geometry["x"], "y": geometry["y"]}
+        for key, minimum, maximum in (("width", .03, 1), ("height", .02, 1), ("fontSize", .008, .08)):
+            if key in body["geometry"]:
+                value = body["geometry"][key]
+                if type(value) not in (int, float) or not math.isfinite(value) or not minimum <= value <= maximum:
+                    raise APIError("文字批注尺寸无效")
+                geometry[key] = value
+        if geometry["x"] + geometry.get("width", 0) > 1.001 or geometry["y"] + geometry.get("height", 0) > 1.001:
+            raise APIError("文字批注超出页面边界")
     return dict(page=page, kind=kind, color=color, geometry=geometry, text=text.strip())
 
 

@@ -6,7 +6,6 @@ import { LoadError } from '../components/LoadError';
 import { useResource } from '../hooks/useResource';
 import { Icon, type IconName } from '../components/Icon';
 import { ReadingGarden } from '../components/ReadingGarden';
-import { formatTime } from '../utils/papers';
 
 export function OverviewPage() {
   const { data, error, loading, reload } = useResource(api.dashboard);
@@ -62,8 +61,8 @@ export function OverviewPage() {
         </Empty></Card>
         : <DashboardCharts data={data} />}
       <div className="dashboard-bottom"><section className="dashboard-panel recent-reading"><div className="panel-heading"><h2>最近阅读</h2><a href="#/papers">查看全部 →</a></div>
-        {data.recent_papers?.length ? data.recent_papers.map(paper => <a className="recent-paper" href={`#/papers/${paper.id}`} key={paper.id}><span className="recent-paper-icon"><Icon name="library" size={22} /></span><span className="recent-paper-title"><strong>{paper.title}</strong><small>{paper.authors || '作者待补充'} · {paper.year || '年份待补充'}</small></span><Progress percent={paper.reading_progress?.percent ?? 0} size="small" /><time>{formatTime(paper.reading_progress!.last_read_at!)}</time></a>) : <div className="dashboard-placeholder"><Icon name="book" size={24} /><p>从一篇好论文开始。阅读过的文献会留在这里。</p><a href="#/papers">打开文献库 →</a></div>}
-      </section><section className="dashboard-panel"><div className="panel-heading"><h2>我的标签</h2><a href="#/tags">管理标签 →</a></div><div className="dashboard-tags">{data.by_tag.length ? data.by_tag.slice(0, 12).map(tag => <a href="#/tags" key={tag.id}>{tag.name}<span>{tag.count}</span></a>) : <p className="muted">用标签连接你的研究兴趣。</p>}</div><p className="tag-footnote">让零散的阅读，慢慢连成自己的知识地图。</p></section></div>
+        {data.recent_papers?.length ? data.recent_papers.map(paper => <div className="recent-paper" key={paper.id}><span className="recent-paper-icon"><Icon name="library" size={22} /></span><span className="recent-paper-title"><a href={`#/papers/${paper.id}`}><strong>{paper.title}</strong></a><small>{paper.authors || '作者待补充'} · {paper.year || '年份待补充'}</small></span><Progress percent={paper.reading_progress?.percent ?? 0} size="small" /><a className="recent-resume" href={`#/papers/${paper.id}?read=1`}>继续阅读 ↗</a></div>) : <div className="dashboard-placeholder"><Icon name="book" size={24} /><p>从一篇好论文开始。阅读过的文献会留在这里。</p><a href="#/papers">打开文献库 →</a></div>}
+      </section><section className="dashboard-panel"><div className="panel-heading"><h2>我的标签</h2><a href="#/tags">管理标签 →</a></div><div className="dashboard-tags">{data.by_tag.length ? data.by_tag.slice(0, 12).map(tag => <a href={`#/papers?tag_id=${tag.id}`} key={tag.id}>{tag.name}<span>{tag.count}</span></a>) : <p className="muted">用标签连接你的研究兴趣。</p>}</div><p className="tag-footnote">点击标签，查看相关文献。</p></section></div>
     </div>}
   </>;
 }

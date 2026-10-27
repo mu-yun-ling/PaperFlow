@@ -21,7 +21,7 @@ function CurrentPage() {
     case 'papers': return <PaperListPage />;
     case 'new': return <PaperFormPage key="new" />;
     case 'edit': return <PaperFormPage key={`edit-${route.id}`} id={route.id} />;
-    case 'detail': return <PaperDetailPage key={route.id} id={route.id} />;
+    case 'detail': return <PaperDetailPage key={route.id} id={route.id} autoRead={route.read} />;
     case 'tags': return <TagsPage />;
     case 'dashboard': return <OverviewPage />;
     case 'ai-settings': return <AISettingsPage />;

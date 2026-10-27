@@ -3,7 +3,7 @@ export type MarkupTool = 'read' | 'pen' | 'highlight' | 'text' | 'erase';
 export type AnnotationInput = { page: number; color: string; text: string } & (
   { kind: 'pen'; geometry: { points: [number, number][] } } |
   { kind: 'highlight'; geometry: { rects: HighlightRect[] } } |
-  { kind: 'text'; geometry: { x: number; y: number } }
+  { kind: 'text'; geometry: { x: number; y: number; width?: number; height?: number; fontSize?: number } }
 );
 export type PdfAnnotation = AnnotationInput & { id: number };
 export interface AnnotationStore {
@@ -13,4 +13,6 @@ export interface AnnotationStore {
   update: (id: number, input: AnnotationInput) => Promise<void>;
   remove: (id: number) => Promise<void>;
   setDraft: (active: boolean) => void;
+  selectedId: number | null; select: (id: number | null) => void;
+  canUndo: boolean; canRedo: boolean; undo: () => Promise<void>; redo: () => Promise<void>;
 }

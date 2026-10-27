@@ -1,10 +1,10 @@
 import { useSyncExternalStore } from 'react';
 
 type Route = { page: 'papers' | 'new' | 'tags' | 'dashboard' | 'ai-settings' | 'not-found' }
-  | { page: 'detail' | 'edit'; id: number };
+  | { page: 'detail' | 'edit'; id: number; read?: boolean };
 
 export function parseRoute(hash: string): Route {
-  const path = hash.replace(/^#/, '') || '/papers';
+  const [path, query = ''] = (hash.replace(/^#/, '') || '/papers').split('?');
   if (path === '/papers' || path === '/') return { page: 'papers' };
   if (path === '/papers/new') return { page: 'new' };
   if (path === '/tags') return { page: 'tags' };
@@ -12,7 +12,7 @@ export function parseRoute(hash: string): Route {
   if (path === '/settings/ai') return { page: 'ai-settings' };
   const match = /^\/papers\/([1-9]\d*)(\/edit)?$/.exec(path);
   if (match && Number.isSafeInteger(Number(match[1]))) {
-    return { page: match[2] ? 'edit' : 'detail', id: Number(match[1]) };
+    return { page: match[2] ? 'edit' : 'detail', id: Number(match[1]), ...(!match[2] && new URLSearchParams(query).get('read') === '1' ? { read: true } : {}) };
   }
   return { page: 'not-found' };
 }

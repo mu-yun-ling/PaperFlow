@@ -57,3 +57,28 @@ def test_old_database_upgrade_preserves_paper_and_notes(app, client):
     assert client.get(f"/api/papers/{paper['id']}/notes").json['data'] == [note]
     url = f"/api/files/{paper['paper_file']['id']}/annotations"
     assert client.post(url, json=sample('text')).status_code == 201
+
+
+def test_text_box_geometry_and_font_size_persist_without_rewriting_legacy(client):
+    paper = upload(client, body={'title': 'Resizable text'}).json['data']
+    url = f"/api/files/{paper['paper_file']['id']}/annotations"
+    legacy = client.post(url, json=sample('text')).json['data']
+    assert legacy['geometry'] == {'x': .8, 'y': .2}
+    geometry = {'x': .1, 'y': .3, 'width': .4, 'height': .2, 'fontSize': .025}
+    updated = client.put(f"{url}/{legacy['id']}", json={**sample('text'), 'geometry': geometry})
+    assert updated.status_code == 200
+    assert updated.json['data']['geometry'] == geometry
+    assert client.get(url).json['data'][0]['geometry'] == geometry
+
+
+@pytest.mark.parametrize('geometry', [
+    {'x': .9, 'y': .1, 'width': .3}, {'x': .1, 'y': .9, 'height': .2},
+    {'x': .1, 'y': .1, 'width': 0}, {'x': .1, 'y': .1, 'height': -1},
+    {'x': .1, 'y': .1, 'width': True}, {'x': .1, 'y': .1, 'fontSize': True},
+    {'x': .1, 'y': .1, 'fontSize': .001}, {'x': .1, 'y': .1, 'fontSize': .5},
+])
+def test_text_box_rejects_invalid_dimensions_without_mutation(client, geometry):
+    paper = upload(client, body={'title': 'Bounds'}).json['data']
+    url = f"/api/files/{paper['paper_file']['id']}/annotations"
+    assert client.post(url, json={**sample('text'), 'geometry': geometry}).status_code == 400
+    assert client.get(url).json['data'] == []

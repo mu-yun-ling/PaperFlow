@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { App, Button, Empty, Pagination, Progress, Segmented, Skeleton, Space, Tag } from 'antd';
-import { api } from '../api/client';
+import { api, paperListParams } from '../api/client';
 import { useResource } from '../hooks/useResource';
 import { PaperActions } from '../components/PaperActions';
 import { LoadError } from '../components/LoadError';
@@ -11,13 +11,24 @@ import type { FilterValues } from '../utils/paperFilters';
 import { formatTime } from '../utils/papers';
 import { Icon } from '../components/Icon';
 import { errorMessage } from '../api/client';
+import { parseLibraryQuery } from '../utils/libraryState';
+
+function initialQuery() {
+  const query = window.location.hash.split('?')[1];
+  if (query) return parseLibraryQuery(query);
+  try { return parseLibraryQuery(sessionStorage.getItem('paperflow.library.query') || ''); } catch { return parseLibraryQuery(''); }
+}
 
 export function PaperListPage() {
   const { message } = App.useApp();
   const [view, setView] = useState(() => { try { return localStorage.getItem('paperflow.library.view') === 'compact' ? 'compact' : 'cards'; } catch { return 'cards'; } });
   const [favoriting, setFavoriting] = useState<number | null>(null);
-  const [draft, setDraft] = useState<FilterValues>(defaultFilters);
-  const [query, setQuery] = useState({ page: 1, filters: normalizeFilters(defaultFilters) });
+  const initial = useRef(initialQuery());
+  const restoreScroll = useRef((() => { try { const query = window.location.hash.split('?')[1]; return !query || query === sessionStorage.getItem('paperflow.library.query'); } catch { return false; } })());
+  const [draft, setDraft] = useState<FilterValues>(initial.current.filters);
+  const [query, setQuery] = useState({ page: initial.current.page, filters: normalizeFilters(initial.current.filters) });
+  const restored = useRef(false);
+  const [returnedPaper] = useState(() => { try { return sessionStorage.getItem('paperflow.library.paper'); } catch { return null; } });
   const { page, filters } = query;
   const invalidYear = yearError(draft.year);
   const draftKey = JSON.stringify(normalizeFilters(draft));
@@ -25,6 +36,19 @@ export function PaperListPage() {
   const pending = !invalidYear && draftKey !== queryKey;
   const load = useCallback((signal: AbortSignal) => api.papers.list(page, signal, filters), [page, filters]);
   const { data, loading, error, reload } = useResource(load);
+  useEffect(() => {
+    const params = paperListParams(page, filters); window.history.replaceState(null, '', `#/papers?${params}`);
+    try { sessionStorage.setItem('paperflow.library.query', params); } catch { /* Filtering still works. */ }
+  }, [page, queryKey]);
+  useEffect(() => {
+    const remember = () => { try { sessionStorage.setItem('paperflow.library.scroll', String(window.scrollY)); } catch { /* Optional preference. */ } };
+    window.addEventListener('scroll', remember, { passive: true }); return () => window.removeEventListener('scroll', remember);
+  }, []);
+  useEffect(() => {
+    if (!data || restored.current) return; restored.current = true;
+    let offset = 0; try { if (restoreScroll.current) offset = Math.max(0, Number(sessionStorage.getItem('paperflow.library.scroll')) || 0); } catch { /* Start at top. */ }
+    const frame = requestAnimationFrame(() => window.scrollTo(0, offset)); return () => cancelAnimationFrame(frame);
+  }, [data]);
 
   useEffect(() => {
     if (invalidYear || draftKey === queryKey) return;
@@ -61,7 +85,7 @@ export function PaperListPage() {
       : `${hasFilters(filters) ? '筛选结果' : '全部文献'} · ${data?.total ?? 0} 篇`}</p><Segmented aria-label="文献显示方式" value={view} onChange={value => { setView(value); try { localStorage.setItem('paperflow.library.view', value); } catch { /* 无存储时仍可切换。 */ } }} options={[{ value: 'cards', label: <span title="卡片视图"><Icon name="grid" size={15} /><span className="sr-only">卡片视图</span></span> }, { value: 'compact', label: <span title="紧凑视图"><Icon name="list" size={15} /><span className="sr-only">紧凑视图</span></span> }]} /></div>
     {error ? <LoadError error={error} retry={reload} /> : loading && !data ? <Skeleton active paragraph={{ rows: 8 }} /> :
       data?.items.length ? <div className={`library-grid view-${view} ${loading || pending ? 'is-updating' : ''}`} aria-busy={loading || pending}>
-        {data.items.map(paper => <article className="library-card" key={paper.id}>
+        {data.items.map(paper => <article id={`paper-${paper.id}`} className={`library-card${returnedPaper === String(paper.id) ? ' returned-paper' : ''}`} key={paper.id} onClick={() => { try { sessionStorage.setItem('paperflow.library.paper', String(paper.id)); } catch { /* Optional preference. */ } }}>
           <div className="library-card-top"><span className="paper-year">{paper.year || '年份待补充'}</span><Space size={0}><Button type="text" size="small" aria-label={paper.is_favorite ? '取消收藏' : '收藏文献'} aria-pressed={paper.is_favorite} className={paper.is_favorite ? 'favorite-active' : 'favorite-button'} disabled={favoriting !== null || loading || pending} onClick={async () => { setFavoriting(paper.id); try { await api.papers.update(paper.id, { is_favorite: !paper.is_favorite }); reload(); } catch (reason) { message.error(errorMessage(reason)); } finally { setFavoriting(null); } }} icon={<Icon name="star" size={16} />} />
             <PaperActions id={paper.id} onDeleted={afterDelete} disabled={loading || pending} /></Space></div>
           <h2><a href={`#/papers/${paper.id}`}>{paper.title}</a></h2><p className="library-authors">{paper.authors || '作者未填写'}</p>

@@ -27,3 +27,9 @@ test('原文链接只允许 HTTP(S)', () => {
     assert.equal(safeExternalUrl(value), undefined);
   }
 });
+
+test('带标签查询与直接继续阅读的地址保持原路由兼容', () => {
+  assert.deepEqual(parseRoute('#/papers?tag_id=2&is_favorite=true'), { page: 'papers' });
+  assert.deepEqual(parseRoute('#/papers/12?read=1'), { page: 'detail', id: 12, read: true });
+  assert.deepEqual(parseRoute('#/papers/12?read=0'), { page: 'detail', id: 12 });
+});

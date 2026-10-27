@@ -8,7 +8,7 @@ export function ReadingExcerpt({ content }: { content: string }) {
   useEffect(() => {
     const element = body.current;
     if (!element) return;
-    const observer = new ResizeObserver(() => setLong(element.scrollHeight > 57));
+    const observer = new ResizeObserver(() => setLong(element.scrollHeight > 63));
     observer.observe(element); return () => observer.disconnect();
   }, [content]);
   return <section className="reading-excerpt" aria-label="原文摘录">

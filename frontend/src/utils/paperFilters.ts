@@ -20,11 +20,12 @@ export function normalizeFilters(values: FilterValues): PaperFilters {
     year: values.year?.trim() ? Number(values.year) : undefined,
     reading_status: values.reading_status,
     research_topic: values.research_topic?.trim() || undefined,
+    is_favorite: values.is_favorite,
     sort_by: values.sort_by ?? 'created_at',
     sort_order: values.sort_order ?? 'desc',
   };
 }
 
 export function hasFilters(filters: PaperFilters): boolean {
-  return !!(filters.title || filters.author || filters.tag_id || filters.year || filters.reading_status || filters.research_topic);
+  return !!(filters.title || filters.author || filters.tag_id || filters.year || filters.reading_status || filters.research_topic || filters.is_favorite !== undefined);
 }

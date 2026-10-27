@@ -22,7 +22,7 @@ export function errorMessage(error: unknown): string {
 
 export function paperListParams(page: number, filters: PaperFilters = {}): string {
   const params = new URLSearchParams({ page: String(page), page_size: '20' });
-  for (const key of ['title', 'author', 'tag_id', 'year', 'reading_status', 'research_topic', 'sort_by', 'sort_order'] as const) {
+  for (const key of ['title', 'author', 'tag_id', 'year', 'reading_status', 'research_topic', 'is_favorite', 'sort_by', 'sort_order'] as const) {
     const value = filters[key];
     if (value !== undefined && String(value).trim() !== '') params.set(key, String(value).trim());
   }

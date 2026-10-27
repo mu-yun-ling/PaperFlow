@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { App, Button, Skeleton, Space, Tabs, Tag } from 'antd';
 import { api, errorMessage } from '../api/client';
 import { PaperActions } from '../components/PaperActions';
@@ -10,8 +10,9 @@ import { ReadingStatusTag } from '../components/ReadingStatusTag';
 import { useResource } from '../hooks/useResource';
 import { navigate } from '../routing';
 import { formatTime, safeExternalUrl } from '../utils/papers';
+import type { HighlightRect } from '../utils/readingNotes';
 
-export function PaperDetailPage({ id }: { id: number }) {
+export function PaperDetailPage({ id, autoRead = false }: { id: number; autoRead?: boolean }) {
   const { message } = App.useApp();
   const load = useCallback((signal: AbortSignal) => api.papers.get(id, signal), [id]);
   const { data: paper, error, loading, reload, setData } = useResource(load);
@@ -19,7 +20,12 @@ export function PaperDetailPage({ id }: { id: number }) {
   const [notesTab, setNotesTab] = useState('notes');
   const [createRequest, setCreateRequest] = useState(0);
   const [notesVersion, setNotesVersion] = useState(0);
-  const [openRequest, setOpenRequest] = useState<{ page: number; token: number }>();
+  const [openRequest, setOpenRequest] = useState<{ page: number; token: number; rects?: HighlightRect[] }>();
+  const opened = useRef(false);
+  useEffect(() => {
+    if (!autoRead) { opened.current = false; return; }
+    if (paper?.paper_file && !opened.current) { opened.current = true; setOpenRequest({ page: paper.paper_file.reading_progress?.current_page ?? 1, token: Date.now() }); }
+  }, [autoRead, paper?.paper_file?.id]);
 
   async function toggleFavorite() {
     if (saving || !paper) return;
@@ -28,13 +34,14 @@ export function PaperDetailPage({ id }: { id: number }) {
     catch (reason) { message.error(errorMessage(reason)); }
     finally { setSaving(false); }
   }
-  if (loading) return <div className="page-loading"><Skeleton active paragraph={{ rows: 10 }} /></div>;
-  if (error) return <div className="page-loading"><LoadError error={error} retry={reload} /></div>;
+  if (loading && !paper) return <div className="page-loading"><Skeleton active paragraph={{ rows: 10 }} /></div>;
+  if (error && !paper) return <div className="page-loading"><LoadError error={error} retry={reload} /></div>;
   if (!paper) return null;
   const externalUrl = safeExternalUrl(paper.url);
   const doiUrl = paper.doi ? `https://doi.org/${paper.doi.split('/').map(encodeURIComponent).join('/')}` : undefined;
 
   return <div className="paper-detail">
+    {!!error && <LoadError error={error} retry={reload} />}
     <div className="detail-toolbar"><a className="back-link" href="#/papers">← 返回文献库</a><Space>
       <Button type="text" onClick={toggleFavorite} loading={saving}>{paper.is_favorite ? '★ 已收藏' : '☆ 收藏文献'}</Button>
       <PaperActions id={id} onDeleted={() => navigate('/papers')} disabled={saving} />
@@ -43,7 +50,7 @@ export function PaperDetailPage({ id }: { id: number }) {
       <h1>{paper.title}</h1><p className="break-text">{paper.authors || '作者未填写'}{paper.year ? ` · ${paper.year}` : ''}</p>
       {!!paper.tags.length && <Space wrap size={[4, 6]}>{paper.tags.map(tag => <Tag key={tag.id}>{tag.name}</Tag>)}</Space>}
     </header>
-    <FilesPanel paperId={id} paperFile={paper.paper_file} onChanged={reload} openRequest={openRequest} onOpenHandled={() => setOpenRequest(undefined)} />
+    <FilesPanel paperId={id} paperTitle={paper.title} paperFile={paper.paper_file} onChanged={reload} openRequest={openRequest} onOpenHandled={() => setOpenRequest(undefined)} />
     <div className="detail-content-grid"><div className="reading-main">
       <section className="abstract-card"><div className="section-caption">ABSTRACT</div><h2>摘要</h2>
         <p className="note-content">{paper.abstract || '还没有摘要。添加几句话，为下一次阅读留下线索。'}</p></section>
@@ -52,7 +59,7 @@ export function PaperDetailPage({ id }: { id: number }) {
         <Space wrap><Button onClick={() => setNotesTab('attachments')}>上传笔记</Button>
           <Button type="primary" onClick={() => { setNotesTab('notes'); setCreateRequest(value => value + 1); }}>＋ 新建笔记</Button></Space></div>
         <Tabs activeKey={notesTab} onChange={setNotesTab} items={[
-          { key: 'notes', label: '在线笔记', children: <NotesPanel paperId={id} refreshVersion={notesVersion} hideCreate createRequest={createRequest} onCreateHandled={() => setCreateRequest(0)} sourceFileId={paper.paper_file?.id} onJump={page => setOpenRequest({ page, token: Date.now() })} /> },
+          { key: 'notes', label: '在线笔记', children: <NotesPanel paperId={id} refreshVersion={notesVersion} hideCreate createRequest={createRequest} onCreateHandled={() => setCreateRequest(0)} sourceFileId={paper.paper_file?.id} totalPages={paper.paper_file?.reading_progress?.total_pages} onJump={(page, rects) => setOpenRequest({ page, rects, token: Date.now() })} /> },
           { key: 'attachments', label: `笔记附件${paper.note_attachments.length ? ` · ${paper.note_attachments.length}` : ''}`,
             children: <FilesPanel paperId={id} notes={paper.note_attachments} onChanged={reload} /> },
         ]} />

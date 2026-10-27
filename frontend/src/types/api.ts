@@ -7,6 +7,7 @@ export interface Health {
 export type ReadingStatus = 'not_started' | 'reading' | 'completed';
 
 export interface PaperFilters {
+  is_favorite?: boolean;
   title?: string;
   author?: string;
   tag_id?: number;
