@@ -117,6 +117,8 @@ class FileChanges:
 
 @contextmanager
 def file_transaction():
+    # 数据库回滚不能撤销磁盘操作：旧文件先隔离，提交成功才清理，失败则恢复。
+    # 同时追踪新文件，避免重复文献或数据库故障留下无引用附件。
     changes = FileChanges()
     try:
         yield changes

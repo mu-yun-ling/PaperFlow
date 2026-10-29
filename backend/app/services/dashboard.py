@@ -7,7 +7,8 @@ from .validation import STATUSES
 
 
 def dashboard_data():
-    # 每次从数据库聚合，空库也返回完整的状态分类，便于图表直接使用。
+    # 每次从数据库全量聚合，不受列表分页影响；空库也返回完整的状态分类。
+    # 文献计数不连接标签或笔记，避免多对多关联将一篇文献重复计数。
     counts = dict(db.session.execute(select(Paper.reading_status, func.count(Paper.id))
                                      .group_by(Paper.reading_status)).all())
     statuses = [{"status": status, "count": counts.get(status, 0)} for status in STATUSES]

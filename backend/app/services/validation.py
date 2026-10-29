@@ -13,6 +13,7 @@ MAX_RESOURCE_ID = 2**63 - 1
 
 
 def normalized_key(value):
+    # 标题和标签复用同一查重规则，统一全半角、连续空白和大小写，不改变显示文本。
     return " ".join(unicodedata.normalize("NFKC", value).split()).casefold()
 
 

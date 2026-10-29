@@ -26,6 +26,7 @@ def list_tags():
 
 
 def set_paper_tag(paper, tag, attached):
+    # 关联操作保持幂等：重复添加或移除不会增加关系记录，也不会误改其他文献。
     if attached and tag not in paper.tags:
         if len(paper.tags) >= 100:
             raise APIError("单篇文献最多关联 100 个标签")
@@ -38,6 +39,8 @@ def set_paper_tag(paper, tag, attached):
 
 
 def save_note(body, paper=None, note=None):
+    # 创建时由路由查出所属文献，更新时只接受正文；不能通过编辑笔记转移归属。
+    # 非空和长度校验先于赋值，空笔记既不能新建，也不能覆盖已有内容。
     content = text_field(body.get("content"), "笔记内容", 50000, required=True)
     if note is None:
         note = Note(paper=paper, content=content)

@@ -2,22 +2,29 @@
 
 个人文献阅读与笔记工作台。把论文原文、摘录、自己的理解放在一起，让阅读留下可回溯的记录。
 
-南开大学软件学院「企业级 AI」课程项目。
+本项目为南开大学软件学院「企业级 AI」结课项目。
 
 ![阅读工作台](docs/screenshots/final-reading.jpg)
 
 ## 可以做什么
 
 - **管理文献**：PDF 信息预填、标签与收藏、组合筛选，快速找回正在读的论文。
+- **阅读概览**：按阅读状态、年份和标签统计文献，随文献增删改更新。
 - **连续阅读**：缩略图、缩放、阅读进度与位置恢复，可调宽度的原文与笔记对照。
 - **随读随记**：手动关联页码、跨页追加摘录、精确回到原文，支持 Markdown 与 LaTeX。
 - **直接批注**：高亮、画线、可移动和调整尺寸的文字批注，以及撤销／重做。
 - **保留思考**：本机草稿恢复、笔记搜索和页码筛选，支持 PDF、DOCX、Markdown、TXT 附件。
 - **AI 辅助**：论文分析、关键词建议、阅读总结与片段解释，可在页面配置兼容服务。
 
+## 技术栈
+
+React · TypeScript · Vite · Ant Design · PDF.js · ECharts
+
+Flask · SQLAlchemy · SQLite
+
 ## 本地运行
 
-需要 **Python 3.10+**、**Node.js 22.13+**。在 Windows PowerShell 中执行：
+需要 **Python 3.10+**、**Node.js 22.13+**。在项目根目录的 Windows PowerShell 中执行：
 
 ```powershell
 # 首次安装
@@ -35,82 +42,90 @@
 
 打开 [http://127.0.0.1:5173](http://127.0.0.1:5173)。AI 功能可在侧栏「AI 设置」中配置，其余功能无需模型服务即可使用。
 
-文献和附件保存在本机 `backend/instance/`；备份时请保留整个目录。在线笔记草稿暂存在当前浏览器，正式保存后写入数据库。下载原文得到原始 PDF，不包含站内批注。
+默认后端端口为 5000，前端为 5173。若默认 Python 过旧，可使用 `.\scripts\setup.ps1 -PythonExecutable 'Python解释器的完整路径'` 安装。
 
-## 技术栈
+## 使用说明
 
-React · TypeScript · Vite · Ant Design · PDF.js · ECharts
+### 文献管理
 
-Flask · SQLAlchemy · SQLite
+新增文献时只有标题必填。可先选择 PDF，本地识别标题、作者、年份、DOI 和摘要后预填空字段，核对后保存；识别失败可手动填写，也可不上传 PDF。重复标题或 DOI、空标题和非法年份会提示错误。
+
+文献库支持标题、作者、标签、年份、阅读状态、研究主题和收藏的组合筛选，以及排序、分页、卡片与紧凑视图。研究主题按完整名称匹配；从详情返回保留查询条件和位置。标签可创建、删除及关联多篇文献，首页标签也可直接进入筛选结果。
+
+删除文献会同时清理其笔记、PDF、附件、进度和批注；删除标签只解除关联，共享文献不受影响。
+
+### 阅读与摘录
+
+点击“开始阅读／继续阅读”打开工作台。PDF 支持连续滚动、缩略图、缩放、输入页码后按回车跳转及位置恢复。“专注原文／对照阅读／专注笔记”切换阅读布局；拖动分隔条调整宽度，双击恢复默认，也可聚焦后按方向键调整。
+
+选中文字后可“摘录到笔记／AI 解释／高亮”。已有草稿时可继续追加，或另建笔记并保留原草稿。多段、跨页摘录各自保存来源，点击来源返回原文并短暂强调目标句。扫描件没有文字层时可手动记录页码，不提供 OCR。
+
+当前位置与历史最远阅读页分别保存，进度表示到达位置，已读完状态不会因回看降低。替换 PDF 后新文件单独记录进度，旧摘录保留，但需重新关联原文。
+
+### 笔记与草稿
+
+文献详情和阅读器均可新增、编辑、删除笔记。阅读器中新建默认关联当前页，也可修改页码或选择全文笔记。“我的理解”和摘录支持 Markdown 与 LaTeX，例如 `$E=mc^2$`；笔记可按内容搜索、按当前页筛选及按页序排列。移除摘录不会删除理解，旧 Markdown 笔记继续可用。
+
+编辑内容即时保存为当前浏览器的本机草稿，详情与工作台共享；刷新后可从“本机草稿”恢复。点击“保存笔记”才写入数据库，保存成功后清理对应草稿。浏览器存储失败会提示，清理浏览器数据会删除尚未正式保存的草稿。
+
+### PDF 批注与笔记附件
+
+- 画笔模式拖动画线，高亮模式选中文字；文字模式点击页面添加批注。选择已有标记后可改色或删除。
+- 文字批注可通过上方把手移动、右下角调整大小，双击或点“编辑”修改文字，并可调整字号。方向键微调，Shift 加方向键扩大步幅。
+- 工具栏支持本次打开期间最多 50 步撤销／重做；聚焦 PDF 后可用 Ctrl+Z、Ctrl+Shift+Z。批注保存于阅读层，“下载原文”仍返回未加批注的 PDF。
+- 在详情或阅读器上传笔记附件，支持 PDF、DOCX、MD、TXT，单文件不超过 25 MB。PDF、Markdown、TXT 可在线对照；DOCX 下载后本地打开。文本附件使用 UTF-8，Markdown 支持表格、代码和公式，不执行嵌入 HTML。
+
+### AI 设置
+
+在侧栏“AI 设置”填写服务地址、模型名称和 API Key，启用后测试连接并保存，立即生效。地址填写兼容 Chat Completions 的 API 根地址，不包含 `/chat/completions`；高级设置可调整超时、输出上限及 token 参数。也可复制 `backend/.env.example` 为 `backend/.env` 配置，网页保存值优先。
+
+论文分析使用文献信息、摘要和本地提取的正文片段；阅读总结还使用在线笔记，片段解释只发送选区及相关文献信息。页面显示来源范围与失败提示；关键词先勾选再添加，总结可另存为笔记，已有内容不会自动覆盖，生成结果需核对。
+
+设置保存在 `backend/instance/ai-settings.json`，包含明文密钥，不应分享或提交。密钥留空保留已有值，更换服务地址需重新填写密钥。
+
+## 数据与排错
+
+- 数据库为 `backend/instance/paperflow.db`，附件在 `backend/instance/uploads/`。备份前停止后端，保留整个 `backend/instance/`。
+- 后端启动会保留数据并执行幂等升级，不需要删除数据库，也不要在运行中单独移动附件文件。
+- 页面连接失败时检查前后端是否都已启动，可访问[健康检查](http://127.0.0.1:5000/api/health)确认数据库连接。自定义后端端口时，用前端环境变量 `PAPERFLOW_API_TARGET` 指定地址。
+- PDF 预览失败可重试或下载；密码保护文件需用本地阅读器打开。字体与解析资源随安装和构建准备。
+- 项目面向本机个人使用，默认监听 `127.0.0.1`，没有账号与多用户权限。
+
+## AI 使用情况
+
+使用 Codex 辅助需求分析、设计、实现、调试与测试，按阶段限定开发范围并验证结果。各阶段提示词、功能调整和问题修复过程见[AI 辅助开发记录](docs/ai-development.md)。应用内 AI 结果由用户确认后保存。
 
 ## 文件结构
 
 ```text
-PaperFlow/
-├─ backend/                         后端服务
-│  ├─ app/
-│  │  ├─ __init__.py                 创建 Flask 应用、加载配置与注册接口
-│  │  ├─ models/                    文献、标签、笔记、附件与批注的数据模型
-│  │  ├─ routes/                    REST API：文献、文件、笔记、批注与 AI
-│  │  ├─ services/                  业务逻辑、文件管理、PDF 提取与 AI 调用
-│  │  ├─ migrations.py              保留原数据的数据库升级
-│  │  ├─ serializers.py             将数据库对象转换为接口响应
-│  │  ├─ errors.py                  统一错误响应与异常处理
-│  │  └─ extensions.py              SQLAlchemy 与数据库连接设置
-│  ├─ tests/                        后端接口、数据与文件处理测试
-│  ├─ .env.example                  环境变量配置示例
-│  ├─ requirements.txt              Python 直接依赖
-│  ├─ requirements-lock.txt         已验证的 Python 依赖版本
-│  └─ instance/                     本机数据库、上传附件、AI 设置与运行日志
-├─ frontend/                        前端应用
-│  ├─ src/
-│  │  ├─ main.tsx                   浏览器入口，加载应用与样式
-│  │  ├─ App.tsx                    全局主题、语言与应用外壳
-│  │  ├─ routing.ts                 页面地址解析与导航
-│  │  ├─ pages/                     首页、文献库、详情、录入、标签和 AI 设置
-│  │  ├─ components/                PDF 阅读器、笔记编辑器与可复用界面组件
-│  │  ├─ hooks/                     数据加载、共享草稿与批注状态管理
-│  │  ├─ api/                       后端请求封装与错误处理
-│  │  ├─ types/                     接口数据与批注的 TypeScript 类型
-│  │  ├─ utils/                     笔记编解码、页码布局、筛选等工具
-│  │  ├─ styles.css                 基础页面、表单与 Markdown 样式
-│  │  └─ workspace.css              阅读工作台主题与响应式布局
-│  ├─ tests/                        前端数据、路由与工具逻辑测试
-│  ├─ scripts/pdf-assets.mjs        准备 PDF.js 字体与解析资源
-│  ├─ package.json                  前端依赖与开发、测试、构建命令
-│  ├─ package-lock.json             锁定前端依赖版本
-│  └─ vite.config.ts                开发端口、API 代理与构建配置
-├─ scripts/
-│  ├─ setup.ps1                     安装依赖并初始化数据库
-│  ├─ start-backend.ps1             升级数据库并启动后端
-│  ├─ start-frontend.ps1            启动前端开发服务
-│  └─ preview_*.py                  使用独立示例数据的界面验收环境
-├─ docs/                            使用指南、系统设计与阶段验收记录
-│  └─ screenshots/                  界面截图与验收图片
-└─ README.md                        项目介绍与快速开始
+backend/app/       Flask 接口、业务服务、数据模型与迁移
+backend/tests/     后端自动化测试
+frontend/src/      React 页面、阅读组件与状态管理
+frontend/tests/    前端逻辑与渲染测试
+scripts/           安装与启动脚本
+docs/              系统设计、测试与开发记录
 ```
-
-`backend/instance/`、`.venv/`、`frontend/node_modules/`、`frontend/dist/` 和自动准备的 `frontend/public/pdfjs/` 为本机数据或生成内容，不提交到仓库。本地 `prompt/` 保存开发提示词与概念图，也已忽略。
-
-## 文档
-
-- [使用与配置](docs/user-guide.md)
-- [系统设计与 API](docs/design.md)
-- [开发与验收记录](docs/development.md)
 
 ## 运行检查
 
 ```powershell
 cd backend
-..\.venv\Scripts\python.exe -m pytest -q
+..\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp=instance/submission-review-tests
 cd ../frontend
 npm.cmd test
 npm.cmd run build
 ```
 
+后端 253 项、前端 58 项测试通过，类型检查与生产构建通过。测试使用独立数据，AI 测试无需真实密钥。
+
+## 项目文档
+
+- [系统设计与 API](docs/design.md)
+- [功能验收说明](docs/assessment.md)
+
 ## 附录：开发过程与记录
 
-各阶段的实现范围、验证步骤和截图保留在开发记录中，以下仅作索引；完整目录见[开发与验收记录](docs/development.md)。
+项目按阶段推进，以下记录保留各阶段的实现范围、验证步骤和截图。
 
 | 阶段 | 主要内容 | 详细记录 |
 | --- | --- | --- |

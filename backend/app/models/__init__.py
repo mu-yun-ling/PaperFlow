@@ -8,6 +8,7 @@ def utc_now():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+# 复合主键保证同一标签只关联一次；两侧外键删除只清理关系，不删除共享实体。
 paper_tags = db.Table(
     "paper_tags",
     db.Column("paper_id", db.Integer, db.ForeignKey("papers.id", ondelete="CASCADE"), primary_key=True),
@@ -57,6 +58,7 @@ class Tag(db.Model):
 
 
 class Note(db.Model):
+    # 笔记必须绑定现存文献；外键级联使直接数据库删除也不会留下孤立笔记。
     __tablename__ = "notes"
     __table_args__ = (db.CheckConstraint("length(trim(content)) > 0", name="ck_note_content"),)
 

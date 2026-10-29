@@ -35,6 +35,8 @@ def resolve_tags(ids):
 
 
 def save_paper(body, paper=None, commit=True):
+    # 标题是最终需求中的最小录入条件；作者、年份可后补，PDF 识别不全时仍能建档。
+    # 标准化键用于查重，展示字段保留原文；唯一约束再兜底并发写入的冲突。
     creating = paper is None
     if creating:
         for field, label in (("title", "标题"),):
@@ -71,7 +73,7 @@ def save_paper(body, paper=None, commit=True):
             raise APIError("是否收藏必须是布尔值")
         values["is_favorite"] = body["is_favorite"]
 
-    # 所有字段和标签校验通过后才修改 ORM 对象，避免半完成更新。
+    # 所有字段、标签和重复性检查通过后才修改 ORM 对象，避免非法编辑改变已有数据。
     tags = resolve_tags(body["tag_ids"]) if "tag_ids" in body else None
     for field, label in (("title_key", "标题"), ("doi", "DOI")):
         if values.get(field):
@@ -97,6 +99,7 @@ def save_paper(body, paper=None, commit=True):
 
 
 def list_papers(args):
+    # 过滤、计数和分页共用 conditions；排序字段采用白名单，同值按 ID 排序以稳定分页。
     supported = {"q", "title", "author", "tag_id", "year", "reading_status", "research_topic",
                  "is_favorite", "sort_by", "sort_order", "page", "page_size"}
     if set(args) - supported:

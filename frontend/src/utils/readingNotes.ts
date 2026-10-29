@@ -41,6 +41,7 @@ export function serializeReadingNote(fields: ReadingFields, source?: NoteSource)
   return withNoteSource(`<!-- paperflow-reading:${payload} -->\n${readingMarkdown(fields).trimEnd()}`, source);
 }
 export function parseReadingNote(content: string): { source?: NoteSource; body: string; fields?: ReadingFields } {
+  // 仅在可读正文与元数据一致时恢复结构化编辑；旧格式、损坏数据或外部修改保留原文。
   const parsed = splitReadingNote(content);
   const match = /^<!-- paperflow-reading:(\{[^\n]*\}) -->\r?\n/.exec(parsed.body);
   if (match) {

@@ -28,7 +28,7 @@
 - 阅读总结额外使用最新 20 条在线笔记，平分 8000 字符预算；用户修改笔记后再次生成会读取最新内容。无笔记、笔记截断和未解析附件均明确提示。
 - 页面显示输入来源、页数、字符数、笔记数和范围说明。输出仅在当前页面暂存，用户可复制或保存总结。
 
-配置步骤及参数范围见[使用指南](user-guide.md#ai-设置)和[配置示例](../backend/.env.example)。请求协议依据 [OpenAI Docs：Chat Completions](https://developers.openai.com/api/reference/resources/chat)；地址、模型、输出 token 参数均可切换。
+配置步骤见 [README 的 AI 设置](../README.md#ai-设置)，参数范围见[配置示例](../backend/.env.example)。请求协议依据 [OpenAI Docs：Chat Completions](https://developers.openai.com/api/reference/resources/chat)；地址、模型、输出 token 参数均可切换。
 
 ## 自动验证
 

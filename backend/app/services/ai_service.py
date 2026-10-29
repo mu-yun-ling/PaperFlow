@@ -20,6 +20,8 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class AIService:
+    # 生成与持久化分开：此处仅返回候选结果，标签应用和笔记保存由独立接口确认。
+    # 配置在调用时校验，未启用模型服务不会阻止基础文献管理启动。
     def __init__(self, config, settings_store=None):
         self._config = config
         self.settings_store = settings_store

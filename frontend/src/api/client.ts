@@ -30,6 +30,8 @@ export function paperListParams(page: number, filters: PaperFilters = {}): strin
 }
 
 async function request<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal; binary?: boolean; timeoutMs?: number; settingsWrite?: boolean } = {}): Promise<T> {
+  // 统一保留后端错误码与字段信息，页面可定位重复输入；取消旧请求与连接失败分开处理。
+  // 删除成功的 204 没有正文，文件请求返回 Blob，其余成功响应必须含 data。
   const multipart = options.body instanceof FormData;
   const timeout = AbortSignal.timeout(options.timeoutMs ?? (multipart || options.binary ? 60000 : 15000));
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
