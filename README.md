@@ -2,7 +2,8 @@
 
 个人文献阅读与笔记工作台。把论文原文、摘录、自己的理解放在一起，让阅读留下可回溯的记录。
 
-本项目为南开大学软件学院「企业级 AI」结课项目。
+本项目为南开大学软件学院「企业级 AI」结课项目，  
+github链接为https://github.com/mu-yun-ling/PaperFlow.git
 
 ![阅读工作台](docs/screenshots/final-reading.jpg)
 
@@ -40,7 +41,7 @@ Flask · SQLAlchemy · SQLite
 .\scripts\start-frontend.ps1
 ```
 
-打开 [http://127.0.0.1:5173](http://127.0.0.1:5173)。AI 功能可在侧栏「AI 设置」中配置，其余功能无需模型服务即可使用。
+前端启动后会自动在默认浏览器打开 [http://127.0.0.1:5173](http://127.0.0.1:5173)。AI 功能可在侧栏「AI 设置」中配置，其余功能无需模型服务即可使用。
 
 默认后端端口为 5000，前端为 5173。若默认 Python 过旧，可使用 `.\scripts\setup.ps1 -PythonExecutable 'Python解释器的完整路径'` 安装。
 
