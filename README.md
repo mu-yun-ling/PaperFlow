@@ -3,7 +3,6 @@
 个人文献阅读与笔记工作台。把论文原文、摘录、自己的理解放在一起，让阅读留下可回溯的记录。
 
 本项目为南开大学软件学院「企业级 AI」结课项目，  
-github链接为https://github.com/mu-yun-ling/PaperFlow.git
 
 ![阅读工作台](docs/screenshots/final-reading.jpg)
 
